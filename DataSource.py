@@ -2,7 +2,6 @@ import logging
 import dpath.util
 from HASSWebSocketController import HASSWebSocketController
 
-
 def safekey(d, keypath, default=None):
     try:
         val = dpath.util.get(d, keypath)
@@ -14,7 +13,7 @@ def safekey(d, keypath, default=None):
 class DataSource:
     voltage = 120
     instances = []
-    state = 1.0   # Assume on
+    state = 1.0  # Assume on
     off_usage = 0.0
     min_watts = 0.0
     max_watts = 0.0
@@ -105,7 +104,6 @@ class HASSSource(DataSource):
         state_value = safekey(message, state_path)
         attribute_value = safekey(message, attribute_path)
 
-        print(attribute_value)
         if state_value is not None and state_value == self.off_state_value:
             # Device is off, set wattage appropriately
             self.power = self.off_usage
@@ -113,7 +111,6 @@ class HASSSource(DataSource):
         elif attribute_value is not None:
             # Get attribute value and scale to provided values
             # Clamp to specified min/max
-            print(f"Attribute value: {attribute_value}")
             clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
             if attribute_value > clamp_attr or attribute_value < clamp_attr:
                 logging.info("Attribute for entity %s outside expected values", self.entity_id)
@@ -123,4 +120,6 @@ class HASSSource(DataSource):
             logging.info("Attribute %s at fraction: %f", self.entity_id, self.on_fraction)
         else:
             pass
+
+            logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
 

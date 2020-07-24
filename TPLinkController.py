@@ -82,7 +82,6 @@ class TPLinkController:
         self.local_ep = await open_local_endpoint('0.0.0.0', self.port)
 
         while True:
-            print("yes")
             data, addr = await self.local_ep.receive()
             request_addr = addr[0]
             decrypted_data = decrypt(data)
