@@ -1,0 +1,5 @@
+dpath==2.0.1
+nest-asyncio==1.4.0
+PyYAML==5.3.1
+six==1.15.0
+websockets==8.1

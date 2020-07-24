@@ -17,7 +17,7 @@ root.addHandler(handler)
 
 async def main():
     # Get environment variables
-    document = open('config.yaml', 'r')
+    document = open('config_private.yaml', 'r')
 
     # Create controller, with config
     controller = TPLinkController(document)
