@@ -1,0 +1,9 @@
+__pycache__
+.git
+.idea
+.DS_Store
+.gitignore
+env
+
+# Ignore repo config files
+config_*
