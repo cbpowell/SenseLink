@@ -4,11 +4,6 @@ import logging
 import asyncio
 import dpath.util
 
-logger = logging.getLogger('websockets')
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler())
-
-
 # Check if a multi-layer key exists
 def keys_exist(element, *keys):
     if not isinstance(element, dict):
@@ -53,7 +48,7 @@ class HASSWebSocketController:
             self.ws = websocket
             # Wait for incoming message from server
             async for message in websocket:
-                print("received message: ", message)
+                logging.debug(f"Received message: {message}")
                 await self.on_message(websocket, message)
 
     async def on_message(self, ws, message):
