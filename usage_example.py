@@ -1,4 +1,4 @@
-from TPLinkController import *
+from SenseLink import *
 import asyncio
 import logging
 import sys
@@ -7,9 +7,8 @@ import nest_asyncio
 nest_asyncio.apply()
 
 root = logging.getLogger()
-root.setLevel(logging.DEBUG)
+root.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 root.addHandler(handler)
@@ -20,7 +19,7 @@ async def main():
     document = open('config_private.yaml', 'r')
 
     # Create controller, with config
-    controller = TPLinkController(document)
+    controller = SenseLink(document)
 
     # Start and run indefinitely
     loop = asyncio.get_event_loop()

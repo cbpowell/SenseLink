@@ -74,7 +74,7 @@ def decrypt(string):
     return result
 
 
-class TPLinkInstance:
+class PlugInstance:
     start_time = None
     data_source = None
 

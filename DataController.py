@@ -4,6 +4,7 @@ import logging
 import asyncio
 import dpath.util
 
+
 # Check if a multi-layer key exists
 def keys_exist(element, *keys):
     if not isinstance(element, dict):
@@ -28,7 +29,7 @@ def safekey(d, keypath, default=None):
         return default
 
 
-class HASSWebSocketController:
+class HASSController:
     ws = None
     event_rq_id = 1
     bulk_rq_id = 2
@@ -43,7 +44,7 @@ class HASSWebSocketController:
         asyncio.create_task(self.client_handler())
 
     async def client_handler(self):
-        print(f"starting ws at url: {self.url}")
+        logging.info(f"Starting websocket client to URL: {self.url}")
         async with websockets.connect(self.url) as websocket:
             self.ws = websocket
             # Wait for incoming message from server

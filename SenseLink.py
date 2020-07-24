@@ -1,11 +1,13 @@
-import yaml
-import json
 import asyncio
+import json
 import time
-from aioudp import *
-from TPLinkInstance import *
+import yaml
+from DataController import HASSController
 from DataSource import *
-from HASSWebSocketController import HASSWebSocketController
+from PlugInstance import *
+from aioudp import *
+import nest_asyncio
+nest_asyncio.apply()
 
 
 # Check if a multi-layer key exists
@@ -24,7 +26,7 @@ def keys_exist(element, *keys):
     return True
 
 
-class TPLinkController:
+class SenseLink:
     remote_ep = None
     local_ep = None
     instances = []
@@ -39,7 +41,6 @@ class TPLinkController:
         config = yaml.load(self.config, Loader=yaml.FullLoader)
         logging.debug(f"Configuration loaded: {config}")
         sources = config.get('sources')
-        print(sources)
         for source in sources.keys():
             # Static value plugs
             if source.lower() == "static":
@@ -47,7 +48,7 @@ class TPLinkController:
                 static = config['sources'][source]
                 # Generate plug instances
                 plugs = static['plugs']
-                instances = TPLinkInstance.configure_plugs(plugs, DataSource)
+                instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self.instances.extend(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
@@ -56,11 +57,11 @@ class TPLinkController:
                 hass = config['sources'][source]
                 url = hass['url']
                 auth_token = hass['auth_token']
-                ds_controller = HASSWebSocketController(url, auth_token)
+                ds_controller = HASSController(url, auth_token)
 
                 # Generate plug instances
                 plugs = hass['plugs']
-                instances = TPLinkInstance.configure_plugs(plugs, HASSSource, ds_controller)
+                instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
 
                 # Add instances to self
                 self.instances.extend(instances)
@@ -70,7 +71,7 @@ class TPLinkController:
 
     def print_instance_wattages(self):
         for inst in self.instances:
-            print(f"Inst Power: {inst.power}")
+            logging.info(f"Plug {inst.identifier} power: {inst.power}")
 
     async def start(self):
         self.create_instances()
@@ -116,4 +117,21 @@ class TPLinkController:
             except ValueError as e:
                 logging.debug("Did not receive valid json")
                 return True
+
+
+async def main():
+    # Assume config file is in local directory
+    config = open('config.yaml', 'r')
+
+    # Create controller, with config
+    controller = SenseLink(config)
+
+    # Start and run indefinitely
+    loop = asyncio.get_event_loop()
+    loop.create_task(controller.start())
+    loop.run_forever()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
