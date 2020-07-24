@@ -1,6 +1,7 @@
 import logging
 import dpath.util
-from HASSWebSocketController import HASSWebSocketController
+from DataController import HASSController
+
 
 def safekey(d, keypath, default=None):
     try:
@@ -56,9 +57,8 @@ class HASSSource(DataSource):
         super().__init__(identifier, details, controller)
 
         # Add self to passed-in Websocket controller
-        if not isinstance(self.controller, HASSWebSocketController):
-            raise TypeError("Incorrect controller type (%s) passed to HASS Data Source",
-                            self.controller.__class__.__name__)
+        if not isinstance(self.controller, HASSController):
+            raise TypeError(f"Incorrect controller type {self.controller.__class__.__name__} passed to HASS Data Source")
         self.controller.data_sources.append(self)
 
         if details is not None:
@@ -89,7 +89,6 @@ class HASSSource(DataSource):
         if 'new_state' in message:
             state_key = 'new_state/'
         elif 'state' in message:
-            print("bulk! ", message)
             state_key = ''
         else:
             return
@@ -113,11 +112,11 @@ class HASSSource(DataSource):
             # Clamp to specified min/max
             clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
             if attribute_value > clamp_attr or attribute_value < clamp_attr:
-                logging.info("Attribute for entity %s outside expected values", self.entity_id)
+                logging.info(f"Attribute for entity {self.entity_id} outside expected values")
 
             # Use linear scaling (for now)
             self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
-            logging.info("Attribute %s at fraction: %f", self.entity_id, self.on_fraction)
+            logging.info(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
         else:
             pass
 
