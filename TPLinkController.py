@@ -108,7 +108,7 @@ class TPLinkController:
                         # Strip leading 4 bytes for...some reason
                         trun_str = encrypted_str[4:]
 
-                        # self.remote_ep.send(trun_str)
+                        self.remote_ep.send(trun_str)
                 else:
                     logging.info(f"Unexpected/unhandled message: {json_data}")
 
