@@ -124,8 +124,8 @@ async def main():
     loglevel = os.environ.get('LOGLEVEL', 'WARNING').upper()
     logging.basicConfig(level=loglevel)
 
-    # Assume config file is in local directory
-    config_location = os.environ.get('CONFIG_LOCATION', './config.yaml')
+    # Assume config file is in etc directory
+    config_location = os.environ.get('CONFIG_LOCATION', '/etc/senselink/config.yaml')
     config = open(config_location, 'r')
 
     # Create controller, with config
