@@ -27,10 +27,10 @@ def keys_exist(element, *keys):
 
 
 class SenseLink:
-    remote_ep = None
-    local_ep = None
-    instances = []
-    hass_sources = []
+    _remote_ep = None
+    _local_ep = None
+    _instances = []
+    should_respond = True
 
     def __init__(self, config, port=9999):
         self.config = config
@@ -49,7 +49,7 @@ class SenseLink:
                 # Generate plug instances
                 plugs = static['plugs']
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
-                self.instances.extend(instances)
+                self._instances.extend(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
             if source.lower() == "hass":
@@ -64,13 +64,13 @@ class SenseLink:
                 instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
 
                 # Add instances to self
-                self.instances.extend(instances)
+                self._instances.extend(instances)
 
                 # Start controller
                 ds_controller.connect()
 
     def print_instance_wattages(self):
-        for inst in self.instances:
+        for inst in self._instances:
             logging.info(f"Plug {inst.identifier} power: {inst.power}")
 
     async def start(self):
@@ -80,10 +80,10 @@ class SenseLink:
     async def _serve(self):
         server_start = time()
         logging.info("Starting UDP server")
-        self.local_ep = await open_local_endpoint('0.0.0.0', self.port)
+        self._local_ep = await open_local_endpoint('0.0.0.0', self.port)
 
         while True:
-            data, addr = await self.local_ep.receive()
+            data, addr = await self._local_ep.receive()
             request_addr = addr[0]
             decrypted_data = decrypt(data)
 
@@ -93,11 +93,11 @@ class SenseLink:
                 if keys_exist(json_data, "emeter", "get_realtime") and keys_exist(json_data, "system", "get_sysinfo"):
                     logging.debug("Broadcast received from: %s: %s", request_addr, json_data)
 
-                    if self.remote_ep is None:
-                        self.remote_ep = await open_remote_endpoint(request_addr, self.port)
+                    if self._remote_ep is None:
+                        self._remote_ep = await open_remote_endpoint(request_addr, self.port)
 
                     # Build and send responses
-                    for inst in self.instances:
+                    for inst in self._instances:
                         if inst.start_time is None:
                             inst.start_time = server_start
                         # Build response
@@ -109,7 +109,7 @@ class SenseLink:
                         # Strip leading 4 bytes for...some reason
                         trun_str = encrypted_str[4:]
 
-                        self.remote_ep.send(trun_str)
+                        self._remote_ep.send(trun_str)
                 else:
                     logging.info(f"Unexpected/unhandled message: {json_data}")
 
