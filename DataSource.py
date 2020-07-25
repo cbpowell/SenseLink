@@ -121,4 +121,3 @@ class HASSSource(DataSource):
             pass
 
             logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
-
