@@ -2,7 +2,6 @@ import asyncio
 import json
 import time
 import yaml
-from DataController import HASSController
 from DataSource import *
 from PlugInstance import *
 from aioudp import *
@@ -120,11 +119,18 @@ class SenseLink:
 
 
 async def main():
+    import os
+
+    loglevel = os.environ.get('LOGLEVEL', 'WARNING').upper()
+    logging.basicConfig(level=loglevel)
+
     # Assume config file is in local directory
-    config = open('config.yaml', 'r')
+    config_location = os.environ.get('CONFIG_LOCATION', './config.yaml')
+    config = open(config_location, 'r')
 
     # Create controller, with config
     controller = SenseLink(config)
+    controller.should_respond = (os.environ.get('UDP_RESPOND', 'True') == 'True')
 
     # Start and run indefinitely
     loop = asyncio.get_event_loop()
@@ -134,4 +140,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
