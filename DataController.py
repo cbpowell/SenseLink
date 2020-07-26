@@ -86,7 +86,7 @@ class HASSController:
 
         elif 'type' in message and message['id'] == self.event_rq_id:
             # Look for state_changed events
-            logging.info("Potential event update received")
+            logging.debug("Potential event update received")
             # Check for data
             if not safekey(message, 'event/data'):
                 return
