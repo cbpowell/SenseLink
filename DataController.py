@@ -3,6 +3,7 @@ import json
 import logging
 import asyncio
 import dpath.util
+import socket
 
 
 # Check if a multi-layer key exists
@@ -45,12 +46,26 @@ class HASSController:
 
     async def client_handler(self):
         logging.info(f"Starting websocket client to URL: {self.url}")
-        async with websockets.connect(self.url) as websocket:
-            self.ws = websocket
-            # Wait for incoming message from server
-            async for message in websocket:
-                logging.debug(f"Received message: {message}")
-                await self.on_message(websocket, message)
+        try:
+            async with websockets.connect(self.url) as websocket:
+                self.ws = websocket
+                # Wait for incoming message from server
+                while True:
+                    try:
+                        message = await websocket.recv()
+                        logging.debug(f"Received message: {message}")
+                        await self.on_message(websocket, message)
+                    except websockets.exceptions.ConnectionClosed as err:
+                        logging.error(f"Lost connection to websocket server ({err})")
+                        logging.info(f"Reconnecting in 10...")
+                        await asyncio.sleep(10)
+                        asyncio.create_task(self.client_handler())
+                        return False
+        except (websockets.exceptions.WebSocketException, socket.gaierror) as err:
+            logging.error(f"Unable to connect to server at {self.url} ({type(err)}:{err})")
+            logging.info(f"Attempting to reconnect in 10...")
+            await asyncio.sleep(10)
+            asyncio.create_task(self.client_handler())
 
     async def on_message(self, ws, message):
         # Authentication with HASS Websockets
