@@ -1,0 +1,41 @@
+sources:
+  hass:
+    url: "ws://your.HASS.API.URL.here"
+    auth_token: "your_token_here"
+    plugs:
+    - Kitchen_Lights:
+        alias: "Kitchen Lights"
+        entity_id: light.kitchen_main_lights
+        mac: 50:c7:bf:f6:4b:05
+        device_id: 57f6811dea6d2767b5c7b29098241d8988984a05
+        off_usage: 0
+        min_watts: 0
+        max_watts: 42
+        attribute_min: 0
+        attribute_max: 255
+        attribute: brightness
+        off_state_value: off
+    - Outdoor_Lights:
+        alias: "Outdoor Lights"
+        entity_id: light.outdoor_deck_lights
+        mac: 50:c7:bf:f6:4b:06
+        device_id: 57f6811dea6d2767b5c7b29098241d8988984a06
+        off_usage: 4
+        min_watts: 10
+        max_watts: 60
+        attribute_min: 0
+        attribute_max: 255
+        attribute: brightness
+        off_state_value: off
+  static:
+    plugs:
+    - NAS:
+        mac: 50:c7:bf:f6:4b:07
+        device_id: 57f6811dea6d2767b5c7b29098241d8988984a07
+        max_watts: 15
+        alias: "NAS Server"
+    - Fan:
+        mac: 50:c7:bf:f6:4b:08
+        device_id: 57f6811dea6d2767b5c7b29098241d8988984a08
+        max_watts: 5
+        alias: "Ceiling Fan"

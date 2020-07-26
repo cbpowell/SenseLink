@@ -2,21 +2,17 @@ from SenseLink import *
 import asyncio
 import logging
 import sys
-import os
 import nest_asyncio
 nest_asyncio.apply()
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root.addHandler(handler)
 
 
 async def main():
     # Get environment variables
-    document = open('config_private.yaml', 'r')
+    document = open('config.yml', 'r')
 
     # Create controller, with config
     controller = SenseLink(document)
