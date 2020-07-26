@@ -108,7 +108,9 @@ class SenseLink:
                         # Strip leading 4 bytes for...some reason
                         trun_str = encrypted_str[4:]
 
-                        self._remote_ep.send(trun_str)
+                        # Allow disabling response
+                        if self.should_respond:
+                            self._remote_ep.send(trun_str)
                 else:
                     logging.info(f"Unexpected/unhandled message: {json_data}")
 
