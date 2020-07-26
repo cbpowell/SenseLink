@@ -30,6 +30,10 @@ def generate_mac(uaa=False, multicast=False, oui=None, separator=':', byte_fmt='
     return separator.join(byte_fmt % b for b in mac)
 
 
+def generate_deviceid():
+    deviceid_bytes = random_bytes(num=20)
+    return ''.join('%02x' % b for b in deviceid_bytes)
+
 # Modified by Charles Powell
 # Based on: https://github.com/softScheck/tplink-smartplug/blob/dcf978b970356c3edd941583d277612182381f2c/tplink_smartplug.py
 
@@ -81,17 +85,16 @@ class PlugInstance:
     def __init__(self, identifier, alias=None, mac=None, device_id=None):
         self.identifier = identifier
         if mac is None:
-            spoof_mac = generate_mac(oui='53:75:31')
-            logging.info("Spoofed MAC: %s", spoof_mac)
-            self.mac = spoof_mac
+            gen_mac = generate_mac(oui='53:75:31')
+            logging.info("Spoofed MAC: %s", gen_mac)
+            self.mac = gen_mac
         else:
             self.mac = mac
 
         if device_id is None:
-            spoof_deviceid_bytes = random_bytes(num=20)
-            spoof_deviceid = ''.join('%02x' % b for b in spoof_deviceid_bytes)
-            logging.info("Spoofed Device ID: %s", spoof_deviceid)
-            self.device_id = spoof_deviceid
+            gen_device_id = generate_deviceid()
+            logging.info("Spoofed Device ID: %s", gen_device_id)
+            self.device_id = gen_device_id
         else:
             self.device_id = device_id
 
@@ -174,3 +177,11 @@ class PlugInstance:
             }
         }
         return response
+
+
+if __name__ == "__main__":
+    # Convenience function to generate a MAC address and Device ID
+    gen_device_id = generate_deviceid()
+    print(f"Generated Device ID:   {gen_device_id}")
+    gen_mac = generate_mac(oui='50:c7:bf')
+    print(f"Generated MAC:         {gen_mac}")
