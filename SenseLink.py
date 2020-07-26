@@ -113,7 +113,7 @@ class SenseLink:
                     logging.info(f"Unexpected/unhandled message: {json_data}")
 
             # Appears to not be JSON
-            except ValueError as e:
+            except ValueError:
                 logging.debug("Did not receive valid json")
                 return True
 
@@ -133,6 +133,7 @@ async def main():
     controller.should_respond = (os.environ.get('UDP_RESPOND', 'True') == 'True')
 
     # Start and run indefinitely
+    logging.info("Starting SenseLink controller")
     loop = asyncio.get_event_loop()
     loop.create_task(controller.start())
     loop.run_forever()
