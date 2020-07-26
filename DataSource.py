@@ -107,6 +107,7 @@ class HASSSource(DataSource):
             # Device is off, set wattage appropriately
             self.power = self.off_usage
             self.state = 0
+            logging.debug(f"Entity {self.entity_id} set to off")
         elif attribute_value is not None:
             # Get attribute value and scale to provided values
             # Clamp to specified min/max
@@ -116,8 +117,9 @@ class HASSSource(DataSource):
 
             # Use linear scaling (for now)
             self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
-            logging.info(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
+            logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
         else:
-            pass
+            logging.debug(f"Attribute update failure for {self.identifier}")
+            return
 
-            logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
+        logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
