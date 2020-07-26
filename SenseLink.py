@@ -132,7 +132,7 @@ async def main():
 
     # Create controller, with config
     controller = SenseLink(config)
-    controller.should_respond = (os.environ.get('UDP_RESPOND', 'True') == 'True')
+    controller.should_respond = (os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE')
 
     # Start and run indefinitely
     logging.info("Starting SenseLink controller")
