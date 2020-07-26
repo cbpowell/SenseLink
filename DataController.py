@@ -6,22 +6,6 @@ import dpath.util
 import socket
 
 
-# Check if a multi-layer key exists
-def keys_exist(element, *keys):
-    if not isinstance(element, dict):
-        raise AttributeError('keys_exists() expects dict as first argument.')
-    if len(keys) == 0:
-        raise AttributeError('keys_exists() expects at least two arguments, one given.')
-
-    _element = element
-    for key in keys:
-        try:
-            _element = _element[key]
-        except KeyError:
-            return False
-    return True
-
-
 def safekey(d, keypath, default=None):
     try:
         val = dpath.util.get(d, keypath)
@@ -104,7 +88,7 @@ class HASSController:
             # Look for state_changed events
             logging.info("Potential event update received")
             # Check for data
-            if not keys_exist(message, 'event', 'data'):
+            if not safekey(message, 'event/data'):
                 return
             # Notify attached data sources
             for ds in self.data_sources:
