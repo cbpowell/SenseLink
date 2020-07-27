@@ -40,20 +40,24 @@ class SenseLink:
         config = yaml.load(self.config, Loader=yaml.FullLoader)
         logging.debug(f"Configuration loaded: {config}")
         sources = config.get('sources')
-        for source in sources.keys():
+        for source in sources:
+            # Get specified identifier
+            source_id = next(iter(source.keys()))
+            logging.debug(f"Adding {source_id} configuration")
             # Static value plugs
-            if source.lower() == "static":
+            if source_id.lower() == "static":
                 # Static sources require no extra config
-                static = config['sources'][source]
+                static = source['static']
                 # Generate plug instances
                 plugs = static['plugs']
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self._instances.extend(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
-            if source.lower() == "hass":
+            if source_id.lower() == "hass":
                 # Configure this HASS Data source
-                hass = config['sources'][source]
+                hass = source['hass']
+
                 url = hass['url']
                 auth_token = hass['auth_token']
                 ds_controller = HASSController(url, auth_token)
