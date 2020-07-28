@@ -11,12 +11,10 @@ handler = logging.StreamHandler(sys.stdout)
 
 
 async def main():
-    # Get environment variables
-    document = open('config.yml', 'r')
-
+    # Get config
+    config = open('config_example.yml', 'r')
     # Create controller, with config
-    controller = SenseLink(document)
-
+    controller = SenseLink(config)
     # Start and run indefinitely
     loop = asyncio.get_event_loop()
     loop.create_task(controller.start())
