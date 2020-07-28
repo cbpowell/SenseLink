@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 import yaml
+import argparse
 from DataSource import *
 from PlugInstance import *
 from aioudp import *
@@ -135,16 +136,26 @@ class SenseLink:
 async def main():
     import os
 
-    loglevel = os.environ.get('LOGLEVEL', 'WARNING').upper()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", help="specify config file path")
+    parser.add_argument("-l", "--log", help="specify log level (DEBUG, INFO, etc)")
+    args = parser.parse_args()
+    config_path = args.config or '/etc/senselink/config.yml'
+    loglevel = args.log or 'WARNING'
+
+    loglevel = os.environ.get('LOGLEVEL', loglevel).upper()
     logging.basicConfig(level=loglevel)
 
     # Assume config file is in etc directory
-    config_location = os.environ.get('CONFIG_LOCATION', '/etc/senselink/config.yml')
+    config_location = os.environ.get('CONFIG_LOCATION', config_path)
+    logging.debug(f"Using config at: {config_location}")
     config = open(config_location, 'r')
 
     # Create controller, with config
     controller = SenseLink(config)
-    controller.should_respond = (os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE')
+    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE':
+        logging.info("Will respond to Sense broadcasts")
+        controller.should_respond = True
 
     # Start and run indefinitely
     logging.info("Starting SenseLink controller")
