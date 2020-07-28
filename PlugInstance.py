@@ -126,6 +126,8 @@ class PlugInstance:
                 instance.data_source = data_source_class(plug_id, details, data_controller)
                 instances.append(instance)
 
+                logging.debug(f"Added plug: {plug_id}")
+
         return instances
 
     @property
