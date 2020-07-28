@@ -48,22 +48,27 @@ class SenseLink:
             if source_id.lower() == "static":
                 # Static sources require no extra config
                 static = source['static']
+                if static is None:
+                    logging.error(f"Configuration error for Source {source_id}")
                 # Generate plug instances
                 plugs = static['plugs']
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self._instances.extend(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
-            if source_id.lower() == "hass":
+            elif source_id.lower() == "hass":
                 # Configure this HASS Data source
                 hass = source['hass']
-
+                if hass is None:
+                    logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
                 auth_token = hass['auth_token']
+                print(f"{url}, {auth_token}")
                 ds_controller = HASSController(url, auth_token)
 
                 # Generate plug instances
                 plugs = hass['plugs']
+                print("Generating instances")
                 instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
 
                 # Add instances to self
@@ -71,6 +76,9 @@ class SenseLink:
 
                 # Start controller
                 ds_controller.connect()
+
+            else:
+                logging.error(f"Source type {source_id} not recognized")
 
     def print_instance_wattages(self):
         for inst in self._instances:
