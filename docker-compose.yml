@@ -2,12 +2,15 @@ version: "3.7"
 services:
   senselink:
     container_name: senselink
-    image: senselink:0.1
+    image: theta142/senselink:latest
     restart: unless-stopped
-    ports:
-      - 9999:9999
-    environment:
-      - LOGLEVEL=DEBUG
-      - SENSE_RESPONSE=False
+    network_mode: host
+      
+    # Optional environment variables
+    # environment:
+      # - LOGLEVEL=DEBUG
+      # - SENSE_RESPONSE=False
+      
+    # Pass local configuration as volume to expected location
     volumes:
-      - ./config_private.yml:/etc/senselink/config.yml:ro
+      - ./config.yml:/etc/senselink/config.yml:ro
