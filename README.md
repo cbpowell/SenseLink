@@ -48,6 +48,8 @@ sources:
       plugs:
       - FirstPlugHere: ...
 ````
+And of course, the device running SenseLink needs to be able to access the HASS Websockets URL & port, so be sure to configure any firewalls appropriately.
+
 ##### 2. HASS Source Plug Configuration
 For each plug utilizing a HASS entity attribute, the following configuration needs to be supplied in addition to the basic requirements from above. Some keys can be ommitted, and the noted default value will be used.
 
@@ -77,6 +79,8 @@ At `0.0` brightness (off), SenseLink would report 0 watts. At `153.0` (60%) brig
 If you don't know exact consumption values, the best way to determine a device power usage is to monitor the power usage manually on the Sense power graph while adjusting the entity attribute of interest, and capture min/max values.
 
 ### Usage
+First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
+
 #### Command Line
 SenseLink can be started directly via the command line:
 `python3 ./SenseLink.py -c "/path/to/your/config.yml`
