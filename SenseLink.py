@@ -114,8 +114,6 @@ class SenseLink:
                             inst.start_time = server_start
                         # Build response
                         response = inst.generate_response()
-                        # Send response
-                        logging.debug("Sending response: %s", response)
                         json_str = json.dumps(response, separators=(',', ':'))
                         encrypted_str = encrypt(json_str)
                         # Strip leading 4 bytes for...some reason
@@ -123,7 +121,12 @@ class SenseLink:
 
                         # Allow disabling response
                         if self.should_respond:
+                            # Send response
+                            logging.debug(f"Sending response: {response}")
                             self._remote_ep.send(trun_str)
+                        else:
+                            # Do not send response, but log for debugging
+                            logging.debug(f"SENSE_RESPONSE disabled, response content: {response}")
                 else:
                     logging.info(f"Unexpected/unhandled message: {json_data}")
 
