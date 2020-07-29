@@ -103,8 +103,8 @@ class SenseLink:
                 json_data = json.loads(decrypted_data)
                 # Sense requests the emeter and system parameters
                 if keys_exist(json_data, "emeter", "get_realtime") and keys_exist(json_data, "system", "get_sysinfo"):
-                    # Check for empty values, to prevent echo storms
-                    if safekey(json_data, 'emeter/get_realtime') is not None:
+                    # Check for non-empty values, to prevent echo storms
+                    if bool(safekey(json_data, 'emeter/get_realtime')):
                         # This is a self-echo, common with Docker without --net=Host!
                         logging.debug("Ignoring non-empty/non-Sense UDP request")
                         continue
