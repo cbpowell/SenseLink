@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  senselink:
+    container_name: senselink
+    image: senselink:0.1
+    restart: unless-stopped
+    ports:
+      - 9999:9999
+    environment:
+      - LOGLEVEL=DEBUG
+      - SENSE_RESPONSE=False
+    volumes:
+      - ./config_private.yml:/etc/senselink/config.yml:ro
