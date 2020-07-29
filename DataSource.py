@@ -24,9 +24,10 @@ class DataSource:
         self.identifier = identifier
         self.controller = controller
         if details is not None:
-            self.off_usage = details.get('off_usage') or 0.0
-            self.min_watts = details.get('min_watts') or 0.0
-            self.max_watts = details.get('max_watts') or 0.0
+            min_watts = details.get('min_watts') or None
+            self.off_usage = details.get('off_usage') or min_watts
+            self.min_watts = min_watts or 0.0
+            self.max_watts = details.get('max_watts')
             self.on_fraction = details.get('on_fraction') or 1.0
 
             self.delta_watts = self.max_watts - self.min_watts
@@ -64,7 +65,7 @@ class HASSSource(DataSource):
         if details is not None:
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
-            self.attribute_max = details.get('attribute_max') or 0.0
+            self.attribute_max = details.get('attribute_max')
             # Entity ID
             self.entity_id = details.get('entity_id')
             # Websocket response key paths
