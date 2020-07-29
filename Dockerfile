@@ -1,5 +1,5 @@
 FROM python:3.7-stretch
-MAINTAINER Charles Powell <cbpowell@gmailcom>
+MAINTAINER Charles Powell <cbpowell@gmail.com>
 
 # Install all dependencies
 COPY requirements.txt /tmp/
@@ -11,7 +11,7 @@ WORKDIR /home/appuser
 USER appuser
 
 # Add all other files
-COPY . .
+COPY *.py ./
 
 # Run
 CMD ["python", "-m", "SenseLink"]
