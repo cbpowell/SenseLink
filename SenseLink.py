@@ -107,7 +107,7 @@ class SenseLink:
                     if safekey(json_data, 'emeter/get_realtime') is not None:
                         # This is a self-echo, common with Docker without --net=Host!
                         logging.debug("Ignoring non-empty/non-Sense UDP request")
-                        return
+                        continue
 
                     logging.debug("Broadcast received from: %s: %s", request_addr, json_data)
 
