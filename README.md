@@ -8,7 +8,7 @@ SenseLink can emulate multiple plugs at the same time, and can report:
 1. Static/unchanging power usage
 2. Dynamic power usage based on other parameters through API integrations (e.g. a dimmer brightness value)
 
-At the moment the only API integration is with a [Home Assitant](https://www.home-assistant.io) Websockets API, but other integrations should be relatively easy to implement!
+At the moment the only API integration is with a [Home Assitant](https://www.home-assistant.io) Websockets API, but other integrations should be relatively easy to implement! SenseLink could also be used to bridge power usage data from other smart plugs that aren't supported by Sense.
 
 # Usage and Configuration
 Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for a an example setup.
