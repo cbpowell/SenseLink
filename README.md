@@ -2,13 +2,16 @@
 A tool to inform a Sense Home Energy Monitor of **known** energy usage in your home, written in Python. A Docker image is also provided!
 
 # About
-SenseLink is a tool that emulates the energy monitoring functionality of [TP-Link Kasa HS110](https://www.tp-link.com/us/home-networking/smart-plug/hs110/) Smart Plugs, and allows customization of the reported power usage. The [Sense Home Energy Monitor](https://sense.com) features an integration with the TP-Link Kasa energy monitoring products, and SenseLink uses that integration to allow you to report device energy usage without actually owning/using a Kasa device.
+SenseLink is a tool that emulates the energy monitoring functionality of [TP-Link Kasa HS110](https://www.tp-link.com/us/home-networking/smart-plug/hs110/) Smart Plugs, and allows you to report "custom" power usage to your [Sense Home Energy Monitor](https://sense.com) based on other parameters.
 
 SenseLink can emulate multiple plugs at the same time, and can report:
 1. Static/unchanging power usage
 2. Dynamic power usage based on other parameters through API integrations (e.g. a dimmer brightness value)
 
 At the moment the only API integration is with a [Home Assitant](https://www.home-assistant.io) Websockets API, but other integrations should be relatively easy to implement! SenseLink could also be used to bridge power usage data from other smart plugs that aren't supported by Sense.
+
+
+
 
 # Usage and Configuration
 Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for a an example setup.
@@ -114,6 +117,7 @@ See the usage in the [`usage_example.py`](https://github.com/cbpowell/SenseLink/
 - Add additional integrations!
 - Add a HTTP GET/POST semi-static data source type
 - Make things more Pythonic (this is my first major tool written in Python!)
+- Allow non-linear attribute-to-power relationships
 
 
 ## About
