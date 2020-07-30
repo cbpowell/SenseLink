@@ -106,7 +106,7 @@ The `-l` option can also be used to set the logging level (`-l "DEBUG"`). SenseL
 ### Docker
 A Docker image is available from Dockerhub, as: `theta142/SenseLink`. When running in Docker SenseLink needs to be passed the configuration file, and needs to be able to listen on UDP port `9999`. Unfortunately Docker doesn't currently seem to play nice with UDP broadcasts, so `--net=host` is required and therefore the specific port exposure is unnecessary. An example run command is:
 
-`docker run -v $(pwd)/config_private.yml:/etc/senselink/config.yml -e LOGLEVEL=INFO --net=host theta142/senselink:latest`
+`docker run -v $(pwd)/your_config.yml:/etc/senselink/config.yml -e LOGLEVEL=INFO --net=host theta142/senselink:latest`
 
 An example `docker-compose` file is also provided in the repository.
 
