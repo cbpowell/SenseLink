@@ -74,7 +74,7 @@ For each plug utilizing a HASS entity attribute, the following configuration nee
 - `max_watts` [Required]: The wattage to report to Sense when the specified attribute is at the maximum value, as defined by `attribute_max`
 - `attribute_min`: The minimum value of the attribute, corresponding to the _lowest_ power consumption of the entity (Defaults to `0.0`)
 - `min_watts`: The wattage to report to Sense when the specified attribute is at the minimum value, as defined by `attribute_min`
-- `off_usage`: The wattage to supply when the entity is described as "off" by HASS. This allows you to potentially specify the difference between an idle power and and off power (Defaults to value supplied for `min_watts`, or `0.0` if none)
+- `off_usage`: The wattage to supply when the entity is described as "off" by HASS. This allows you to potentially specify the difference between an idle power and and off power, such as if the device has a vampire load (Defaults to value supplied for `min_watts`, or `0.0` if none)
 - `off_state_key`: The text value to utilize to determine if the HASS API is reporting the [entity state](https://developers.home-assistant.io/docs/api/websocket#subscribe-to-events) as "off" (Defaults to "off")
 
 SenseLink monitors HASS update events, and scales the reported wattage linearly based on the provided values. For example, if a HASS-connected dimmer switch provides values between `0.0` (off) and `255` (full on) for an attribute called `brightness`, and is connected to four 60 watt incandecent bulbs plus, you would provide the following plug configuration:
