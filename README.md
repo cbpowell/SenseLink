@@ -10,7 +10,7 @@ SenseLink can emulate multiple plugs at the same time, and can report:
 
 At the moment the only API integration is with a [Home Assitant](https://www.home-assistant.io) Websockets API, but other integrations should be relatively easy to implement! SenseLink could also be used to bridge power usage data from other smart plugs that aren't supported by Sense.
 
-
+While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-frequently-asked-questions/7211) use the data from smart plugs for device detection algorithm training, you should be a good citizen and try only provide accurate data! Not to mention, incorrectly reporting your own data hurts your own monitoring as well!
 
 
 # Usage and Configuration
