@@ -12,18 +12,19 @@ At the moment the only API integration is with a [Home Assitant](https://www.hom
 
 While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-frequently-asked-questions/7211) use the data from smart plugs for device detection algorithm training, you should be a good citizen and try only provide accurate data! Not to mention, incorrectly reporting your own data hurts your own monitoring as well!
 
+**You should use this tool at your own risk!** Sense is not obligated to provide any support related to issues with this tool, and there's no guarantee everything will reliably work, or even work. Neither I or Sense can guarantee it won't affect your Sense data, particularly if things go wrong!
 
-# Usage and Configuration
+
+# Configuration
 Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for a an example setup.
 
-## Configuration
 The YAML configuration file should start with a top level `sources` key, which defines an array of sources for power data. Each source then has a `plugs` key to define an array of individual emulated plugs, plugs other configuration details as needed for that particular source. The current supported sources types are:
 - `hass`: Home Assistant, via Websockets API
 - `static`: Plugs with unchanging power values
 
 See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example.
 
-### Required Plug Details - All Source Types
+## Required Plug Details - All Source Types
 Each plug definition needs, at the minimum, the following parameters:
 - `alias`: The plug name - this is the name you'd see if this was a real plug configured in the TP-Link Kasa app
 - `max_watts`: The maximum wattage to report, or in the case of a `static` plug the (unchanging) wattage to report
@@ -44,16 +45,16 @@ A minimum plug definition will look like:
     alias: "Basic Plug"
 ```
 
-### Static Source Plugs
+## Static Source Plugs
 No additional configuration is necessary beyond the basic required configuration above.
 
 
-### Home Assistant (HASS) Source and Plugs
+## Home Assistant (HASS) Source and Plugs
 To provide dynamic power values to Sense based on a value from a HASS entity, SenseLink needs to be configured with:
 1. Details to communicate with the HASS Websockets API, and
 2. The entity and attribute to utilize for power calculation for each HASS-source plug
 
-#### 1. HASS API configuration
+### 1. HASS API configuration
 For a HASS source, you need to provide the `url` for your HASS server [Websockets API](https://developers.home-assistant.io/docs/api/websocket/), and a ["Long lived access token"](https://www.home-assistant.io/docs/authentication/#your-account-profile) as the `auth_token`. These values need to be defined as key-values in the configuration YAML at the same level as the `plugs` array, as seen in the example configuration:
 ````yaml
 sources:
@@ -65,7 +66,7 @@ sources:
 ````
 And of course, the device running SenseLink needs to be able to access the HASS Websockets URL & port, so be sure to configure any firewalls appropriately.
 
-#### 2. HASS Source Plug Configuration
+### 2. HASS Source Plug Configuration
 For each plug utilizing a HASS entity attribute, the following configuration needs to be supplied in addition to the basic requirements from above. Some keys can be ommitted, and the noted default value will be used.
 
 - `entity_id` [Required]: This tells SenseLink what HASS entity to observe for data.
@@ -94,31 +95,31 @@ At `0.0` brightness (off), SenseLink would report 0 watts. At `153.0` (60%) brig
 If you don't know exact consumption values, the best way to determine a device power usage is to monitor the power usage manually on the Sense power graph while adjusting the entity attribute of interest, and capture min/max values.
 
 
-## Usage
+# Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
 
-### Command Line
+## Command Line
 SenseLink can be started directly via the command line:
 `python3 ./SenseLink.py -c "/path/to/your/config.yml`
 
 The `-l` option can also be used to set the logging level (`-l "DEBUG"`). SenseLink needs to be able to listen on UDP port `9999`, so be sure you allow incoming on any firewalls.
 
-### Docker
+## Docker
 A Docker image is available from Dockerhub, as: `theta142/SenseLink`. When running in Docker SenseLink needs to be passed the configuration file, and needs to be able to listen on UDP port `9999`. Unfortunately Docker doesn't currently seem to play nice with UDP broadcasts, so `--net=host` is required and therefore the specific port exposure is unnecessary. An example run command is:
 
 `docker run -v $(pwd)/your_config.yml:/etc/senselink/config.yml -e LOGLEVEL=INFO --net=host theta142/senselink:latest`
 
 An example `docker-compose` file is also provided in the repository.
 
-### In other projects
+## In other projects
 See the usage in the [`usage_example.py`](https://github.com/cbpowell/SenseLink/blob/master/usage_example.py) file.
 
-## Todo
+# Todo
 - Add additional integrations!
 - Add a HTTP GET/POST semi-static data source type
 - Make things more Pythonic (this is my first major tool written in Python!)
 - Allow non-linear attribute-to-power relationships
 
 
-## About
+# About
 Copyright 2020, Charles Powell
