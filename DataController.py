@@ -54,7 +54,6 @@ class HASSController:
     async def on_message(self, ws, message):
         # Authentication with HASS Websockets
         message = json.loads(message)
-        logging.debug(f"Message received: {message}")
 
         if 'type' in message and message['type'] == 'auth_required':
             logging.info("Authentication requested")
