@@ -113,14 +113,14 @@ class HASSSource(DataSource):
         state_value = safekey(message, state_path)
         attribute_value = safekey(message, attribute_path)
 
-        if state_value is not None and state_value == self.off_state_value:
+        if attribute_value is not None and self.power_keypath is not None:
+            # If using power_keypath, just use value for power update
+            self.power = attribute_value
+        elif state_value is not None and state_value == self.off_state_value:
             # Device is off, set wattage appropriately
             self.power = self.off_usage
             self.state = 0
             logging.debug(f"Entity {self.entity_id} set to off")
-        elif attribute_value is not None and self.power_keypath is not None:
-            # If using power_keypath, just use value for power update
-            self.power = attribute_value
         elif attribute_value is not None:
             # Get attribute value and scale to provided values
             # Clamp to specified min/max
