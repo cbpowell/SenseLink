@@ -92,9 +92,9 @@ class PlugInstance:
 
     def generate_response(self):
         # Grab latest values from source
+        power = self.data_source.get_power()
         current = self.data_source.get_current()
         voltage = self.data_source.voltage
-        power = self.data_source.get_power()
 
         # Response dict
         response = {
@@ -114,8 +114,8 @@ class PlugInstance:
                     "hw_ver": "1.0",
                     "type": "IOT.SMARTPLUGSWITCH",
                     "model": "HS110(US)",
-                    "mac": self.mac,
-                    "deviceId": self.device_id,
+                    "mac": self.mac.upper(),
+                    "deviceId": self.device_id.upper(),
                     "hwId": "60FF6B258734EA6880E186F8C96DDC61",
                     "fwId": "00000000000000000000000000000000",
                     "oemId": "FFF22CFF774A0B89F7624BFC6F50D5DE",
@@ -140,6 +140,6 @@ class PlugInstance:
 if __name__ == "__main__":
     # Convenience function to generate a MAC address and Device ID
     gen_device_id = generate_deviceid()
-    print(f"Generated Device ID:   {gen_device_id}")
+    print(f"Generated Device ID:   {gen_device_id.upper()}")
     gen_mac = generate_mac(oui='50:c7:bf')
-    print(f"Generated MAC:         {gen_mac}")
+    print(f"Generated MAC:         {gen_mac.upper()}")
