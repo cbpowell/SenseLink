@@ -149,6 +149,7 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="specify config file path")
     parser.add_argument("-l", "--log", help="specify log level (DEBUG, INFO, etc)")
+    parser.add_argument("-q", "--quiet", help="do not respond to Sense UPD queries", action="store_true")
     args = parser.parse_args()
     config_path = args.config or '/etc/senselink/config.yml'
     loglevel = args.log or 'WARNING'
@@ -163,7 +164,7 @@ async def main():
 
     # Create controller, with config
     controller = SenseLink(config)
-    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE':
+    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE' or not args.quiet:
         logging.info("Will respond to Sense broadcasts")
         controller.should_respond = True
 
