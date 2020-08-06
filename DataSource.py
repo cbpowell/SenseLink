@@ -63,11 +63,11 @@ class HASSSource(DataSource):
         self.controller.data_sources.append(self)
 
         if details is not None:
+            # Entity ID
+            self.entity_id = details.get('entity_id')
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max')
-            # Entity ID
-            self.entity_id = details.get('entity_id')
             # Websocket response key paths
             # self.state_path = details.get('state_keypath') or None
             self.off_state_value = details.get('off_state_key') or 'off'
