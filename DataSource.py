@@ -27,7 +27,7 @@ class DataSource:
             min_watts = details.get('min_watts') or None
             self.off_usage = details.get('off_usage') or min_watts
             self.min_watts = min_watts or 0.0
-            self.max_watts = details.get('max_watts')
+            self.max_watts = details.get('max_watts') or 0.0
             self.on_fraction = details.get('on_fraction') or 1.0
 
             self.delta_watts = self.max_watts - self.min_watts
