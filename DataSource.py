@@ -161,6 +161,9 @@ class HASSSource(DataSource):
                 logging.error(f'Unable to convert power_keypath value to float, using 0.0')
                 self.power = 0.0
 
+            # Assume off if reported power usage is 0.0
+            if self.power == 0.0:
+                self.state = 0
         elif state_value is not None and state_value == self.off_state_value:
             logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
