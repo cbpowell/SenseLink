@@ -92,41 +92,85 @@ class HASSSource(DataSource):
         if safekey(message, 'entity_id') != self.entity_id:
             return
 
+        logging.debug(f"Entity update received: {message}")
+
         # Determine type of state update (new or bulk)
         if 'new_state' in message:
+            # Incremental update
             state_key = 'new_state/'
+            self.parse_incremental_update(message)
         elif 'state' in message:
+            # Bulk update
             state_key = ''
+            self.parse_bulk_update(message)
         else:
             return
 
+    def parse_bulk_update(self, message):
+        logging.debug(f"Parsing bulk update")
         # Get state, attribute of interest
-        state_path = state_key + 'state'
+        state_path = 'state'
         if self.power_keypath is not None:
-            attribute_path = state_key + self.power_keypath
-
+            attribute_path = self.power_keypath
         elif self.attribute is not None:
-            attribute_path = state_key + 'attributes/' + self.attribute
+            attribute_path = 'attributes/' + self.attribute
         else:
             attribute_path = self.attribute_path
 
         state_value = safekey(message, state_path)
         attribute_value = safekey(message, attribute_path)
 
+        try:
+            self.parse_update_values(state_value, attribute_value)
+        except ValueError as err:
+            logging.error(f'{err} in message: {message}')
+
+    def parse_incremental_update(self, message):
+        logging.debug(f"Parsing incremental update")
+        # Get state, attribute of interest
+        state_path = 'new_state/state'
+        if self.power_keypath is not None:
+            attribute_path = 'new_state/' + self.power_keypath
+        elif self.attribute is not None:
+            attribute_path = 'new_state/attributes/' + self.attribute
+        else:
+            attribute_path = self.attribute_path
+
+        # Get state value
+        state_value = safekey(message, state_path)
+        # Get attribute value, checking to force it to be a number
+        try:
+            attribute_value = float(safekey(message, attribute_path))
+        except ValueError:
+            logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
+            attribute_value = 0.0
+
+        # Try parsing values
+        try:
+            self.parse_update_values(state_value, attribute_value)
+        except ValueError as err:
+            logging.error(f'{err} in message: {message}')
+
+    def parse_update_values(self, state_value, attribute_value):
         if attribute_value is not None and self.power_keypath is not None:
             # If using power_keypath, just use value for power update
-            self.power = attribute_value
+            logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
+            try:
+                self.power = float(attribute_value)
+            except ValueError:
+                logging.error(f'Unable to convert power_keypath value to float, using 0.0')
         elif state_value is not None and state_value == self.off_state_value:
+            logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
             self.power = self.off_usage
             self.state = 0
-            logging.debug(f"Entity {self.entity_id} set to off")
         elif attribute_value is not None:
+            logging.debug(f'Pulling power from attribute for {self.identifier}')
             # Get attribute value and scale to provided values
             # Clamp to specified min/max
             clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
             if attribute_value > clamp_attr or attribute_value < clamp_attr:
-                logging.info(f"Attribute for entity {self.entity_id} outside expected values")
+                logging.error(f"Attribute for entity {self.entity_id} outside expected values")
 
             # Use linear scaling (for now)
             self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
@@ -134,8 +178,7 @@ class HASSSource(DataSource):
             logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
         else:
             logging.info(f"Attribute update failure for {self.identifier}")
-            logging.debug(f"No valid attribute or keypath found in update: {message}")
-            return
+            raise ValueError(f'No valid attribute found for {self.identifier}')
 
         logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
 
