@@ -65,6 +65,12 @@ class HASSSource(DataSource):
         if details is not None:
             # Entity ID
             self.entity_id = details.get('entity_id')
+            # First check if power_keypath is defined, indicating this entity should provide a pre-calculated
+            # power value, so no attribute scaling required
+            self.power_keypath = details.get('power_keypath') or None
+            if self.power_keypath is not None:
+                # No other details required
+                return
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max')
@@ -96,7 +102,10 @@ class HASSSource(DataSource):
 
         # Get state, attribute of interest
         state_path = state_key + 'state'
-        if self.attribute:
+        if self.power_keypath is not None:
+            attribute_path = state_key + self.power_keypath
+
+        elif self.attribute is not None:
             attribute_path = state_key + 'attributes/' + self.attribute
         else:
             attribute_path = self.attribute_path
@@ -109,6 +118,9 @@ class HASSSource(DataSource):
             self.power = self.off_usage
             self.state = 0
             logging.debug(f"Entity {self.entity_id} set to off")
+        elif attribute_value is not None and self.power_keypath is not None:
+            # If using power_keypath, just use value for power update
+            self.power = attribute_value
         elif attribute_value is not None:
             # Get attribute value and scale to provided values
             # Clamp to specified min/max
