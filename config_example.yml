@@ -6,7 +6,7 @@ sources:
       - Kitchen_Lights:
           alias: "Kitchen Lights"
           entity_id: light.kitchen_main_lights
-          mac: 50:c7:bf:f6:4b:05
+          mac: 53:75:31:f6:4b:01
           off_usage: 0
           min_watts: 0
           max_watts: 42
@@ -14,11 +14,18 @@ sources:
           attribute_max: 255
           attribute: brightness
           off_state_value: off
-      - Outdoor_Lights:
+      - Pump_Power_Meter:
+          alias: "Sump Pump Power Meter"
+          entity_id: sensor.sump_pump
+          mac: 53:75:31:f6:4b:02
+          power_keypath: "state"
+          # Or, if the power usage value is buried in the state update, something like:
+          # power_keypath: "attributes/usage"
+        - Outdoor_Lights:
           alias: "Outdoor Lights"
           entity_id: light.outdoor_deck_lights
-          mac: 50:c7:bf:f6:4b:06
-          off_usage: 4
+          mac: 53:75:31:f6:4b:03
+          off_usage: 4  # Represents a vampire load when "off"
           min_watts: 10
           max_watts: 60
           attribute_min: 0
@@ -28,10 +35,10 @@ sources:
   - static:
       plugs:
       - NAS:
-          mac: 50:c7:bf:f6:4b:07
+          mac: 53:75:31:f6:4c:01
           max_watts: 15
           alias: "NAS Server"
       - Fan:
-          mac: 50:c7:bf:f6:4b:08
+          mac: 53:75:31:f6:4c:02
           max_watts: 5
           alias: "Ceiling Fan"
