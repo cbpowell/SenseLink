@@ -118,9 +118,15 @@ class HASSSource(DataSource):
 
             # Use linear scaling (for now)
             self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
+            self.power = self.min_watts + self.on_fraction * self.delta_watts
             logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
         else:
-            logging.debug(f"Attribute update failure for {self.identifier}")
+            logging.info(f"Attribute update failure for {self.identifier}")
+            logging.debug(f"No valid attribute or keypath found in update: {message}")
             return
 
         logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
+
+    def get_power(self):
+        # Return internal value
+        return self.power
