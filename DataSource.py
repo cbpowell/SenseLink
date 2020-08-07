@@ -24,7 +24,7 @@ class DataSource:
         self.identifier = identifier
         self.controller = controller
         if details is not None:
-            min_watts = details.get('min_watts') or None
+            min_watts = details.get('min_watts') or 0.0
             self.off_usage = details.get('off_usage') or min_watts
             self.min_watts = min_watts or 0.0
             self.max_watts = details.get('max_watts') or 0.0
