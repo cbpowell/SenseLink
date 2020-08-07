@@ -11,6 +11,17 @@ def safekey(d, keypath, default=None):
         return default
 
 
+def get_attribute_at_path(message, path):
+    # Get attribute value, checking to force it to be a number
+    try:
+        value = float(safekey(message, path))
+    except (ValueError, TypeError):
+        logging.error(f'Unable to convert attribute path {path} value to float, using 0.0')
+        value = 0.0
+
+    return value
+
+
 class DataSource:
     voltage = 120
     instances = []
@@ -102,12 +113,7 @@ class HASSSource(DataSource):
             attribute_path = state_path
 
         state_value = safekey(message, state_path)
-        # Get attribute value, checking to force it to be a number
-        try:
-            attribute_value = float(safekey(message, attribute_path))
-        except TypeError:
-            logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
-            attribute_value = 0.0
+        attribute_value = get_attribute_at_path(message, attribute_path)
 
         # Try parsing values
         try:
@@ -126,19 +132,13 @@ class HASSSource(DataSource):
         else:
             attribute_path = self.attribute_path
 
-        # Get state value
         state_value = safekey(message, state_path)
-        # Get attribute value, checking to force it to be a number
-        try:
-            attribute_value = float(safekey(message, attribute_path))
-        except TypeError:
-            logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
-            attribute_value = 0.0
+        attribute_value = get_attribute_at_path(message, attribute_path)
 
         # Try parsing values
         try:
             self.parse_update_values(state_value, attribute_value)
-        except ValueError as err:
+        except (ValueError, TypeError) as err:
             logging.error(f'{err} in message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
