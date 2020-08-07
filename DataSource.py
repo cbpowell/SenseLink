@@ -102,12 +102,18 @@ class HASSSource(DataSource):
             attribute_path = state_path
 
         state_value = safekey(message, state_path)
-        attribute_value = safekey(message, attribute_path)
+        # Get attribute value, checking to force it to be a number
+        try:
+            attribute_value = float(safekey(message, attribute_path))
+        except ValueError:
+            logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
+            attribute_value = 0.0
 
+        # Try parsing values
         try:
             self.parse_update_values(state_value, attribute_value)
         except ValueError as err:
-            logging.error(f'{err} in message: {message}')
+            logging.error(f'{err} parsing message: {message}')
 
     def parse_incremental_update(self, message):
         logging.debug(f"Parsing incremental update")
