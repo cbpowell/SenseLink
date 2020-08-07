@@ -13,10 +13,11 @@ def safekey(d, keypath, default=None):
 
 def get_attribute_at_path(message, path):
     # Get attribute value, checking to force it to be a number
+    raw_value = safekey(message, path)
     try:
-        value = float(safekey(message, path))
+        value = float(raw_value)
     except (ValueError, TypeError):
-        logging.error(f'Unable to convert attribute path {path} value to float, using 0.0')
+        logging.error(f'Unable to convert attribute path {path} value ({raw_value}) to float, using 0.0')
         value = 0.0
 
     return value
