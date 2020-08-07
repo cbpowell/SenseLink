@@ -91,7 +91,7 @@ class HASSController:
                 return
             # Notify attached data sources
             for ds in self.data_sources:
-                ds.parse_potential_update(message['event']['data'])
+                ds.parse_incremental_update(message['event']['data'])
 
         elif 'type' in message and message['id'] == self.bulk_rq_id:
             # Look for state_changed events
@@ -100,11 +100,12 @@ class HASSController:
                 return
             # Extract data
             bulk_update = message.get('result')
+            logging.debug(f"Entity update received: {bulk_update}")
             # Loop through statuses
             for status in bulk_update:
                 # Notify attached data sources
                 for ds in self.data_sources:
-                    ds.parse_potential_update(status)
+                    ds.parse_bulk_update(status)
         else:
             logging.debug(f"Unknown/unhandled message received: {message}")
 

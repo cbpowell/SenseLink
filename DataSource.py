@@ -86,28 +86,12 @@ class HASSSource(DataSource):
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
-    # Will be called by the controller for every incoming state update
-    def parse_potential_update(self, message):
+    def parse_bulk_update(self, message):
         # Check for entity_id of interest
         if safekey(message, 'entity_id') != self.entity_id:
             return
-
         logging.debug(f"Entity update received: {message}")
 
-        # Determine type of state update (new or bulk)
-        if 'new_state' in message:
-            # Incremental update
-            state_key = 'new_state/'
-            self.parse_incremental_update(message)
-        elif 'state' in message:
-            # Bulk update
-            state_key = ''
-            self.parse_bulk_update(message)
-        else:
-            return
-
-    def parse_bulk_update(self, message):
-        logging.debug(f"Parsing bulk update")
         # Get state, attribute of interest
         state_path = 'state'
         if self.power_keypath is not None:
@@ -115,7 +99,7 @@ class HASSSource(DataSource):
         elif self.attribute is not None:
             attribute_path = 'attributes/' + self.attribute
         else:
-            attribute_path = self.attribute_path
+            attribute_path = state_path
 
         state_value = safekey(message, state_path)
         attribute_value = safekey(message, attribute_path)
