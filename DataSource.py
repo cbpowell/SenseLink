@@ -101,7 +101,7 @@ class HASSSource(DataSource):
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max')
             # Websocket response key paths
-            # self.state_path = details.get('state_keypath') or None
+            self.state_path = details.get('state_keypath') or 'state'
             self.off_state_value = details.get('off_state_key') or 'off'
             self.attribute = details.get('attribute') or None
             self.attribute_path = details.get('attribute_keypath') or None
@@ -119,15 +119,14 @@ class HASSSource(DataSource):
         logging.debug(f"Entity update received: {message}")
 
         # Get state, attribute of interest
-        state_path = 'state'
         if self.power_keypath is not None:
             attribute_path = self.power_keypath
         elif self.attribute is not None:
             attribute_path = 'attributes/' + self.attribute
         else:
-            attribute_path = state_path
+            attribute_path = self.state_path
 
-        state_value = safekey(message, state_path)
+        state_value = safekey(message, self.state_path)
         attribute_value = get_attribute_at_path(message, attribute_path)
 
         # Try parsing values
