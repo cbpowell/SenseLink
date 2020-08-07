@@ -19,12 +19,12 @@ While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-freque
 Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for a an example setup.
 
 The YAML configuration file should start with a top level `sources` key, which defines an array of sources for power data. Each source then has a `plugs` key to define an array of individual emulated plugs, plugs other configuration details as needed for that particular source. The current supported sources types are:
-- `hass`: Home Assistant, via Websockets API
+- `hass`: Home Assistant, via the Websockets API
 - `static`: Plugs with unchanging power values
 
-See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example.
+See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
 
-## Required Plug Details - All Source Types
+## Basic Plug Definition
 Each plug definition needs, at the minimum, the following parameters:
 - `alias`: The plug name - this is the name you'd see if this was a real plug configured in the TP-Link Kasa app
 - `max_watts`: The maximum wattage to report, or in the case of a `static` plug the (unchanging) wattage to report
@@ -36,7 +36,7 @@ You can use the `PlugInstance` module to generate a random MAC address (with the
 
 Each real TP-Link plug also supplies a unique `device_id` value, however based on my testing Sense doesn't care about this value. If not provided in your configuration, SenseLink will generate a random one at runtime for each plug. Sense could change this in the future, so it is probably a good idea to generate and define a static `device_id` value in your configuration. The `PlugInstances` module will provide one if run as described above.
 
-A minimum plug definition will look like:
+A minimum plug definition will look like the following:
 ```yaml
 - BasicPlug:
     mac: 50:c7:bf:f6:4b:07
@@ -44,55 +44,10 @@ A minimum plug definition will look like:
     max_watts: 15
     alias: "Basic Plug"
 ```
+More "advanced" plugs using smarthome/IoT integrations will require more details - see [the wiki configuration pages](https://github.com/cbpowell/SenseLink/wiki) for more information!
 
-## Static Source Plugs
-No additional configuration is necessary beyond the basic required configuration above.
-
-
-## Home Assistant (HASS) Source and Plugs
-To provide dynamic power values to Sense based on a value from a HASS entity, SenseLink needs to be configured with:
-1. Details to communicate with the HASS Websockets API, and
-2. The entity and attribute to utilize for power calculation for each HASS-source plug
-
-### 1. HASS API configuration
-For a HASS source, you need to provide the `url` for your HASS server [Websockets API](https://developers.home-assistant.io/docs/api/websocket/), and a ["Long lived access token"](https://www.home-assistant.io/docs/authentication/#your-account-profile) as the `auth_token`. These values need to be defined as key-values in the configuration YAML at the same level as the `plugs` array, as seen in the example configuration:
-````yaml
-sources:
-  - hass:
-      url: "ws://your.HASS.API.URL.here"
-      auth_token: "your_token_here"
-      plugs:
-      - FirstPlugHere: ...
-````
-And of course, the device running SenseLink needs to be able to access the HASS Websockets URL & port, so be sure to configure any firewalls appropriately.
-
-### 2. HASS Source Plug Configuration
-For each plug utilizing a HASS entity attribute, the following configuration needs to be supplied in addition to the basic requirements from above. Some keys can be ommitted, and the noted default value will be used.
-
-- `entity_id` [Required]: This tells SenseLink what HASS entity to observe for data.
-- `attribute` [Required]: This tells SenseLink what attribute of the specified entity to observe to calculate power usage. For example, `brightness` for a dimmer switch.
-- `attribute_max` [Required]: The maximum value of the attribute, corresponding the _highest_ power consumption of the entity.
-- `max_watts` [Required]: The wattage to report to Sense when the specified attribute is at the maximum value, as defined by `attribute_max`
-- `attribute_min`: The minimum value of the attribute, corresponding to the _lowest_ power consumption of the entity (Defaults to `0.0`)
-- `min_watts`: The wattage to report to Sense when the specified attribute is at the minimum value, as defined by `attribute_min`
-- `off_usage`: The wattage to supply when the entity is described as "off" by HASS. This allows you to potentially specify the difference between an idle power and and off power, such as if the device has a vampire load (Defaults to value supplied for `min_watts`, or `0.0` if none)
-- `off_state_key`: The text value to utilize to determine if the HASS API is reporting the [entity state](https://developers.home-assistant.io/docs/api/websocket#subscribe-to-events) as "off" (Defaults to "off")
-
-SenseLink monitors HASS update events, and scales the reported wattage linearly based on the provided values. For example, if a HASS-connected dimmer switch provides values between `0.0` (off) and `255` (full on) for an attribute called `brightness`, and is connected to four 60 watt incandecent bulbs plus, you would provide the following plug configuration:
-````yaml
-- KitchenLights:
-    alias: "Kitchen Lights"
-    entity_id: light.kitchen_main_lights
-    mac: 50:c7:bf:f6:4b:08
-    attribute: brightness
-    min_watts: 0
-    max_watts: 240
-    attribute_min: 0
-    attribute_max: 255
-````
-At `0.0` brightness (off), SenseLink would report 0 watts. At `153.0` (60%) brightness, SenseLink will report 144 watts.
-
-If you don't know exact consumption values, the best way to determine a device power usage is to monitor the power usage manually on the Sense power graph while adjusting the entity attribute of interest, and capture min/max values.
+1. [Static plugs](https://github.com/cbpowell/SenseLink/wiki/Static-Plugs)
+2. [Home Assistant plugs](https://github.com/cbpowell/SenseLink/wiki/Home-Assistant-Plugs)
 
 
 # Usage
