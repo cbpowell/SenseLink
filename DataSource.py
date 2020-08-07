@@ -31,10 +31,11 @@ class DataSource:
     min_watts = 0.0
     max_watts = 0.0
     on_fraction = 1.0
+    controller = None
 
     def __init__(self, identifier, details, controller=None):
         self.identifier = identifier
-        self.controller = controller
+        self.add_controller(controller)
         if details is not None:
             min_watts = details.get('min_watts') or 0.0
             self.off_usage = details.get('off_usage') or min_watts
@@ -61,6 +62,10 @@ class DataSource:
         current = self.get_power() / voltage
         return current
 
+    def add_controller(self, controller):
+        # Provided to allow override
+        # Add self to passed-in controller
+        self.controller.data_sources.append(self)
 
 class HASSSource(DataSource):
     # Primary output property
@@ -69,10 +74,19 @@ class HASSSource(DataSource):
     def __init__(self, identifier, details, controller):
         super().__init__(identifier, details, controller)
 
+class HASSSource(DataSource):
+    # Primary output property
+    power = 0.0
+
+    def add_controller(self, controller):
         # Add self to passed-in Websocket controller
         if not isinstance(self.controller, HASSController):
-            raise TypeError(f"Incorrect controller type {self.controller.__class__.__name__} passed to HASS Data Source")
-        self.controller.data_sources.append(self)
+            raise TypeError(
+                f"Incorrect controller type {self.controller.__class__.__name__} passed to HASS Data Source")
+        super().add_controller(controller)
+
+    def __init__(self, identifier, details, controller):
+        super().__init__(identifier, details, controller)
 
         if details is not None:
             # Entity ID
