@@ -21,7 +21,7 @@ sources:
           power_keypath: "state"
           # Or, if the power usage value is buried in the state update, something like:
           # power_keypath: "attributes/usage"
-        - Outdoor_Lights:
+      - Outdoor_Lights:
           alias: "Outdoor Lights"
           entity_id: light.outdoor_deck_lights
           mac: 53:75:31:f6:4b:03
