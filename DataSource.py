@@ -105,7 +105,7 @@ class HASSSource(DataSource):
         # Get attribute value, checking to force it to be a number
         try:
             attribute_value = float(safekey(message, attribute_path))
-        except ValueError:
+        except TypeError:
             logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
             attribute_value = 0.0
 
@@ -131,7 +131,7 @@ class HASSSource(DataSource):
         # Get attribute value, checking to force it to be a number
         try:
             attribute_value = float(safekey(message, attribute_path))
-        except ValueError:
+        except TypeError:
             logging.error(f'Unable to convert attribute path {attribute_path} value to float, using 0.0')
             attribute_value = 0.0
 
@@ -145,11 +145,7 @@ class HASSSource(DataSource):
         if attribute_value is not None and self.power_keypath is not None:
             # If using power_keypath, just use value for power update
             logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
-            try:
-                self.power = float(attribute_value)
-            except ValueError:
-                logging.error(f'Unable to convert power_keypath value to float, using 0.0')
-                self.power = 0.0
+            self.power = float(attribute_value)
 
             # Assume off if reported power usage is 0.0
             if self.power == 0.0:
