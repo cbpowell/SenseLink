@@ -122,7 +122,10 @@ class HASSSource(DataSource):
             logging.error(f'{err} parsing message: {message}')
 
     def parse_incremental_update(self, message):
-        logging.debug(f"Parsing incremental update")
+        # Check for entity_id of interest
+        if safekey(message, 'entity_id') != self.entity_id:
+            return
+        logging.debug(f"Parsing incremental update: {message}")
         # Get state, attribute of interest
         state_path = 'new_state/state'
         if self.power_keypath is not None:
