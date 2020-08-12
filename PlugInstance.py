@@ -1,3 +1,5 @@
+# Copyright 2020, Charles Powell
+
 import random
 import logging
 from DataSource import DataSource

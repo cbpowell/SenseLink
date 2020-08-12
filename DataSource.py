@@ -1,3 +1,5 @@
+# Copyright 2020, Charles Powell
+
 import logging
 import dpath.util
 from DataController import HASSController

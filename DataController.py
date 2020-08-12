@@ -1,3 +1,5 @@
+# Copyright 2020, Charles Powell
+
 import websockets
 import json
 import logging
