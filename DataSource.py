@@ -2,6 +2,7 @@
 
 import logging
 import dpath.util
+from math import isclose
 from DataController import HASSController
 
 
@@ -28,7 +29,7 @@ def get_attribute_at_path(message, path):
 class DataSource:
     voltage = 120
     instances = []
-    state = 1.0  # Assume on
+    state = True  # Assume on
     off_usage = 0.0
     min_watts = 0.0
     max_watts = 0.0
@@ -161,13 +162,13 @@ class HASSSource(DataSource):
             self.power = float(attribute_value)
 
             # Assume off if reported power usage is 0.0
-            if self.power == 0.0:
-                self.state = 0
+            if isclose(self.power, 0.0):
+                self.state = False
         elif state_value is not None and state_value == self.off_state_value:
             logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
             self.power = self.off_usage
-            self.state = 0
+            self.state = False
         elif attribute_value is not None:
             logging.debug(f'Pulling power from attribute for {self.identifier}')
             # Get attribute value and scale to provided values
