@@ -101,11 +101,11 @@ class HASSSource(DataSource):
             self.state_path = details.get('state_keypath') or 'state'
             self.off_state_value = details.get('off_state_value') or 'off'
             self.attribute = details.get('attribute') or None
-            self.attribute_path = details.get('attribute_keypath') or None
+            self.attribute_keypath = details.get('attribute_keypath') or None
 
-            if self.attribute is None and self.attribute_path is None:
-                # Throw error, attribute is required
-                raise Exception(f"Attribute or attribute path not defined for plug {identifier}")
+            if self.attribute is None and self.power_keypath is None:
+                # No specific key or keypath defined, assuming base state key provides power usage
+                logging.debug(f"Defaulting to using base state value for power usage")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
@@ -144,7 +144,8 @@ class HASSSource(DataSource):
         elif self.attribute is not None:
             attribute_path = 'new_state/attributes/' + self.attribute
         else:
-            attribute_path = self.attribute_path
+            # Get the base state as the attribute (i.e. if power is reported directly as state)
+            attribute_path = state_path
 
         state_value = safekey(message, state_path)
         attribute_value = get_attribute_at_path(message, attribute_path)
@@ -156,10 +157,14 @@ class HASSSource(DataSource):
             logging.error(f'{err} in message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
-        if attribute_value is not None and self.power_keypath is not None:
-            # If using power_keypath, just use value for power update
-            logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
-            self.power = float(attribute_value)
+        if attribute_value is not None and (self.power_keypath is not None or self.attribute is None):
+            if self.power_keypath is not None:
+                # If using power_keypath, just use value for power update
+                logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
+            else:
+                logging.debug(f'Pulling power from base state value for {self.identifier}')
+
+            self.power = attribute_value
 
             # Assume off if reported power usage is 0.0
             if isclose(self.power, 0.0):
