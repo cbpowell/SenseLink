@@ -112,5 +112,9 @@ class HASSController:
             logging.debug(f"Unknown/unhandled message received: {message}")
 
 
+class MQTTController:
+    pass
+
+
 if __name__ == "__main__":
     pass
