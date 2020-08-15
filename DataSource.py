@@ -68,6 +68,7 @@ class HASSSource(DataSource):
 
     def __init__(self, identifier, details, controller):
         super().__init__(identifier, details, controller)
+        self.attribute = None
 
         # Add self to passed-in Websocket controller
         if not isinstance(self.controller, HASSController):
@@ -80,6 +81,8 @@ class HASSSource(DataSource):
             # First check if power_keypath is defined, indicating this entity should provide a pre-calculated
             # power value, so no attribute scaling required
             self.power_keypath = details.get('power_keypath') or None
+            if self.power_keypath == "{default}":
+                self.power_keypath = ""
             if self.power_keypath is not None:
                 # No other details required
                 return
@@ -106,7 +109,7 @@ class HASSSource(DataSource):
 
         # Get state, attribute of interest
         state_path = 'state'
-        if self.power_keypath is not None:
+        if self.power_keypath != "":
             attribute_path = self.power_keypath
         elif self.attribute is not None:
             attribute_path = 'attributes/' + self.attribute
@@ -129,12 +132,12 @@ class HASSSource(DataSource):
         logging.debug(f"Parsing incremental update: {message}")
         # Get state, attribute of interest
         state_path = 'new_state/state'
-        if self.power_keypath is not None:
+        if self.power_keypath != "":
             attribute_path = 'new_state/' + self.power_keypath
         elif self.attribute is not None:
             attribute_path = 'new_state/attributes/' + self.attribute
         else:
-            attribute_path = self.attribute_path
+            attribute_path = state_path
 
         state_value = safekey(message, state_path)
         attribute_value = get_attribute_at_path(message, attribute_path)
