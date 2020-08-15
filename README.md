@@ -1,6 +1,8 @@
 # SenseLink
 A tool to inform a Sense Home Energy Monitor of **known** energy usage in your home, written in Python. A Docker image is also provided!
 
+If you're sourcing your energy usage from ESP8266/ESP32 devices via ESPHome, check out my parter project [ESPSense](https://github.com/cbpowell/ESPSense)! You might be able to report power usage to Sense directly from your device.
+
 # About
 SenseLink is a tool that emulates the energy monitoring functionality of [TP-Link Kasa HS110](https://www.tp-link.com/us/home-networking/smart-plug/hs110/) Smart Plugs, and allows you to report "custom" power usage to your [Sense Home Energy Monitor](https://sense.com) based on other parameters.
 
