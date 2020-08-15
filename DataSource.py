@@ -115,46 +115,44 @@ class HASSSource(DataSource):
             return
         logging.debug(f"Entity update received: {message}")
 
-        # Get state, attribute of interest
-        if self.power_keypath is not None:
-            attribute_path = self.power_keypath
-        elif self.attribute is not None:
-            attribute_path = 'attributes/' + self.attribute
-        else:
-            attribute_path = self.state_path
-
-        state_value = safekey(message, self.state_path)
-        attribute_value = get_attribute_at_path(message, attribute_path)
-
-        # Try parsing values
-        try:
-            self.parse_update_values(state_value, attribute_value)
-        except ValueError as err:
-            logging.error(f'{err} parsing message: {message}')
+        root_path = ''
+        self.parse_update(root_path, message)
 
     def parse_incremental_update(self, message):
         # Check for entity_id of interest
         if safekey(message, 'entity_id') != self.entity_id:
             return
         logging.debug(f"Parsing incremental update: {message}")
-        # Get state, attribute of interest
-        state_path = 'new_state/state'
+
+        root_path = 'new_state/'
+        self.parse_update(root_path, message)
+
+    def parse_update(self, root_path, message):
+        # State path
+        state_path = root_path + self.state_path
+        # Figure out attribute path
         if self.power_keypath is not None:
-            attribute_path = 'new_state/' + self.power_keypath
+            # Get value at power keypath as attribute
+            attribute_path = self.power_keypath
         elif self.attribute is not None:
-            attribute_path = 'new_state/attributes/' + self.attribute
+            # Get (single key) attribute
+            attribute_path = root_path + 'attributes/' + self.attribute
+        elif self.attribute_keypath is not None:
+            # Get attribute at path specified
+            attribute_path = root_path + self.attribute_keypath
         else:
             # Get the base state as the attribute (i.e. if power is reported directly as state)
             attribute_path = state_path
 
+        # Pull values at determined paths
         state_value = safekey(message, state_path)
         attribute_value = get_attribute_at_path(message, attribute_path)
 
         # Try parsing values
         try:
             self.parse_update_values(state_value, attribute_value)
-        except (ValueError, TypeError) as err:
-            logging.error(f'{err} in message: {message}')
+        except ValueError as err:
+            logging.error(f'Error for entity {self.entity_id}: {err}, when parsing message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
         if attribute_value is not None and (self.power_keypath is not None or self.attribute is None):
@@ -170,6 +168,7 @@ class HASSSource(DataSource):
             if isclose(self.power, 0.0):
                 self.state = False
         elif state_value is not None and state_value == self.off_state_value:
+            # If user specifies a state value
             logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
             self.power = self.off_usage
