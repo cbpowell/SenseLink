@@ -98,7 +98,7 @@ class HASSSource(DataSource):
                 return
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
-            self.attribute_max = details.get('attribute_max')
+            self.attribute_max = details.get('attribute_max') or 0.0
             # Websocket response key paths
             self.state_path = details.get('state_keypath') or 'state'
             self.off_state_value = details.get('off_state_value') or 'off'
