@@ -67,8 +67,10 @@ class DataSource:
 
     def add_controller(self, controller):
         # Provided to allow override
-        # Add self to passed-in controller
-        self.controller.data_sources.append(self)
+        self.controller = controller
+        # Add self to passed-in controller (which might be None, for static plugs)
+        if self.controller is not None:
+            self.controller.data_sources.append(self)
 
 
 class HASSSource(DataSource):
@@ -77,9 +79,9 @@ class HASSSource(DataSource):
 
     def add_controller(self, controller):
         # Add self to passed-in Websocket controller
-        if not isinstance(self.controller, HASSController):
+        if not isinstance(controller, HASSController):
             raise TypeError(
-                f"Incorrect controller type {self.controller.__class__.__name__} passed to HASS Data Source")
+                f"Incorrect controller type {type(self.controller).__name__} passed to HASS Data Source")
         super().add_controller(controller)
 
     def __init__(self, identifier, details, controller):
