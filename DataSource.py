@@ -124,7 +124,7 @@ class HASSSource(DataSource):
         # Check for entity_id of interest
         if safekey(message, 'entity_id') != self.entity_id:
             return
-        logging.debug(f"Parsing incremental update: {message}")
+        logging.debug(f"Parsing incremental update for {self.entity_id}: {message}")
 
         root_path = 'new_state/'
         self.parse_update(root_path, message)
