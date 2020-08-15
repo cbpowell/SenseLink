@@ -69,12 +69,6 @@ class DataSource:
         # Add self to passed-in controller
         self.controller.data_sources.append(self)
 
-class HASSSource(DataSource):
-    # Primary output property
-    power = 0.0
-
-    def __init__(self, identifier, details, controller):
-        super().__init__(identifier, details, controller)
 
 class HASSSource(DataSource):
     # Primary output property
