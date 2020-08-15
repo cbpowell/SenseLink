@@ -99,7 +99,7 @@ class HASSSource(DataSource):
             self.attribute_max = details.get('attribute_max')
             # Websocket response key paths
             self.state_path = details.get('state_keypath') or 'state'
-            self.off_state_value = details.get('off_state_key') or 'off'
+            self.off_state_value = details.get('off_state_value') or 'off'
             self.attribute = details.get('attribute') or None
             self.attribute_path = details.get('attribute_keypath') or None
 
