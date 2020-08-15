@@ -166,7 +166,7 @@ async def main():
 
     # Create controller, with config
     controller = SenseLink(config)
-    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE' or not args.quiet:
+    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE' and not args.quiet:
         logging.info("Will respond to Sense broadcasts")
         controller.should_respond = True
 
