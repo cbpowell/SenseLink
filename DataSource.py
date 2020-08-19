@@ -2,6 +2,7 @@
 
 import logging
 import dpath.util
+from math import isclose
 from DataController import HASSController
 from DataController import MQTTController
 
@@ -29,7 +30,7 @@ def get_attribute_at_path(message, path):
 class DataSource:
     voltage = 120
     instances = []
-    state = 1.0  # Assume on
+    state = True  # Assume on
     off_usage = 0.0
     min_watts = 0.0
     max_watts = 0.0
@@ -67,15 +68,11 @@ class DataSource:
 
     def add_controller(self, controller):
         # Provided to allow override
-        # Add self to passed-in controller
-        self.controller.data_sources.append(self)
+        self.controller = controller
+        # Add self to passed-in controller (which might be None, for static plugs)
+        if self.controller is not None:
+            self.controller.data_sources.append(self)
 
-class HASSSource(DataSource):
-    # Primary output property
-    power = 0.0
-
-    def __init__(self, identifier, details, controller):
-        super().__init__(identifier, details, controller)
 
 
 class HASSSource(DataSource):
@@ -84,9 +81,9 @@ class HASSSource(DataSource):
 
     def add_controller(self, controller):
         # Add self to passed-in Websocket controller
-        if not isinstance(self.controller, HASSController):
+        if not isinstance(controller, HASSController):
             raise TypeError(
-                f"Incorrect controller type {self.controller.__class__.__name__} passed to HASS Data Source")
+                f"Incorrect controller type {type(self.controller).__name__} passed to HASS Data Source")
         super().add_controller(controller)
 
     def __init__(self, identifier, details, controller):
@@ -103,16 +100,16 @@ class HASSSource(DataSource):
                 return
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
-            self.attribute_max = details.get('attribute_max')
+            self.attribute_max = details.get('attribute_max') or 0.0
             # Websocket response key paths
             self.state_path = details.get('state_keypath') or 'state'
-            self.off_state_value = details.get('off_state_key') or 'off'
+            self.off_state_value = details.get('off_state_value') or 'off'
             self.attribute = details.get('attribute') or None
-            self.attribute_path = details.get('attribute_keypath') or None
+            self.attribute_keypath = details.get('attribute_keypath') or None
 
-            if self.attribute is None and self.attribute_path is None:
-                # Throw error, attribute is required
-                raise Exception(f"Attribute or attribute path not defined for plug {identifier}")
+            if self.attribute is None and self.power_keypath is None:
+                # No specific key or keypath defined, assuming base state key provides power usage
+                logging.debug(f"Defaulting to using base state value for power usage")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
@@ -122,60 +119,64 @@ class HASSSource(DataSource):
             return
         logging.debug(f"Entity update received: {message}")
 
-        # Get state, attribute of interest
-        if self.power_keypath is not None:
-            attribute_path = self.power_keypath
-        elif self.attribute is not None:
-            attribute_path = 'attributes/' + self.attribute
-        else:
-            attribute_path = self.state_path
-
-        state_value = safekey(message, self.state_path)
-        attribute_value = get_attribute_at_path(message, attribute_path)
-
-        # Try parsing values
-        try:
-            self.parse_update_values(state_value, attribute_value)
-        except ValueError as err:
-            logging.error(f'{err} parsing message: {message}')
+        root_path = ''
+        self.parse_update(root_path, message)
 
     def parse_incremental_update(self, message):
         # Check for entity_id of interest
         if safekey(message, 'entity_id') != self.entity_id:
             return
-        logging.debug(f"Parsing incremental update: {message}")
-        # Get state, attribute of interest
-        state_path = 'new_state/state'
-        if self.power_keypath is not None:
-            attribute_path = 'new_state/' + self.power_keypath
-        elif self.attribute is not None:
-            attribute_path = 'new_state/attributes/' + self.attribute
-        else:
-            attribute_path = self.attribute_path
+        logging.debug(f"Parsing incremental update for {self.entity_id}: {message}")
 
+        root_path = 'new_state/'
+        self.parse_update(root_path, message)
+
+    def parse_update(self, root_path, message):
+        # State path
+        state_path = root_path + self.state_path
+        # Figure out attribute path
+        if self.power_keypath is not None:
+            # Get value at power keypath as attribute
+            attribute_path = self.power_keypath
+        elif self.attribute is not None:
+            # Get (single key) attribute
+            attribute_path = root_path + 'attributes/' + self.attribute
+        elif self.attribute_keypath is not None:
+            # Get attribute at path specified
+            attribute_path = root_path + self.attribute_keypath
+        else:
+            # Get the base state as the attribute (i.e. if power is reported directly as state)
+            attribute_path = state_path
+
+        # Pull values at determined paths
         state_value = safekey(message, state_path)
         attribute_value = get_attribute_at_path(message, attribute_path)
 
         # Try parsing values
         try:
             self.parse_update_values(state_value, attribute_value)
-        except (ValueError, TypeError) as err:
-            logging.error(f'{err} in message: {message}')
+        except ValueError as err:
+            logging.error(f'Error for entity {self.entity_id}: {err}, when parsing message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
-        if attribute_value is not None and self.power_keypath is not None:
-            # If using power_keypath, just use value for power update
-            logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
-            self.power = float(attribute_value)
+        if attribute_value is not None and (self.power_keypath is not None or self.attribute is None):
+            if self.power_keypath is not None:
+                # If using power_keypath, just use value for power update
+                logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
+            else:
+                logging.debug(f'Pulling power from base state value for {self.identifier}')
+
+            self.power = attribute_value
 
             # Assume off if reported power usage is 0.0
-            if self.power == 0.0:
-                self.state = 0
+            if isclose(self.power, 0.0):
+                self.state = False
         elif state_value is not None and state_value == self.off_state_value:
+            # If user specifies a state value
             logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
             self.power = self.off_usage
-            self.state = 0
+            self.state = False
         elif attribute_value is not None:
             logging.debug(f'Pulling power from attribute for {self.identifier}')
             # Get attribute value and scale to provided values
