@@ -74,7 +74,6 @@ class DataSource:
             self.controller.data_sources.append(self)
 
 
-
 class HASSSource(DataSource):
     # Primary output property
     power = 0.0
@@ -95,9 +94,6 @@ class HASSSource(DataSource):
             # First check if power_keypath is defined, indicating this entity should provide a pre-calculated
             # power value, so no attribute scaling required
             self.power_keypath = details.get('power_keypath') or None
-            if self.power_keypath is not None:
-                # No other details required
-                return
             # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max') or 0.0
@@ -109,7 +105,7 @@ class HASSSource(DataSource):
 
             if self.attribute is None and self.power_keypath is None:
                 # No specific key or keypath defined, assuming base state key provides power usage
-                logging.debug(f"Defaulting to using base state value for power usage")
+                logging.debug(f"Defaulting to using base 'state' value for power usage")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
