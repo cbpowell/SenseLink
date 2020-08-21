@@ -36,6 +36,38 @@ sources:
             attribute_max: 255
             attribute: brightness
             off_state_value: off
+- mqtt:
+    host: "your.mqtt.broker"
+    port: 1883       # Optional
+    username: admin  # Optional
+    password: supersecret1  # Optional
+    plugs:
+        # Direct power reporting example
+        - UPS:
+            alias: "UPS Backup"
+            power_topic: "ups/usage"  # Value at this topic should be numeric and units of watts!
+            state_topic: "ups/state"
+            off_state_value: "OFF"
+            off_value: 0   # Optional, set to non-zero for vampire loads
+        # Scaled attribute (dimmer setting) example
+        - Porch_Light:
+            alias: "Back Porch Light"
+            attribute_topic: "lights/porch/brightness"
+            attribute_min: 0
+            attribute_max: 255
+            min_watts: 0
+            max_watts: 120
+        # State embedded in JSON value
+        # Use if the MQTT topic returns a JSON dict instead of a single value
+        - LED_Strip:
+            alias: "TV LED Strips"
+            attribute_topic: "leds/living_room_tv/state"
+            attribute_topic_keypath: "settings/brightness"  # Ex: if value at topic were {"settings":{"color":"red", "brightness": 75}}
+            attribute_min: 0
+            attribute_max: 100
+            min_watts: 0
+            max_watts: 15
+
   - static:
       plugs:
       - NAS:
