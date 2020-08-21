@@ -5,6 +5,7 @@ import json
 import logging
 import asyncio
 import dpath.util
+from asyncio_mqtt import Client, MqttError
 import socket
 
 
@@ -113,8 +114,47 @@ class HASSController:
 
 
 class MQTTController:
-    pass
+    data_sources = []
+    user = None
+    password = None
+    client = None
+    handlers = set()
 
+    def __init__(self, host, port=1883, username=None, password=None):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+
+    def connect(self):
+        # Create task
+        asyncio.create_task(self.client_handler())
+
+    async def client_handler(self):
+        logging.info(f"Starting MQTT client to URL: {self.host}")
+        while True:
+            try:
+                await self.listen()
+            except MqttError as error:
+                logging.error(f'Disconnected from MQTT broker, reconnecting in 10...')
+            finally:
+                await asyncio.sleep(10)
+
+    async def listen(self):
+        async with Client(self.host, self.port, username=self.username, password=self.password) as client:
+            # async with client.filtered_messages("homeassistant/Sense/other_usage") as messages:
+            #     await client.subscribe("senselink/#")
+            #     logging.info(f'Connected to MQTT Broker')
+            #     async for message in messages:
+            #         print(message.payload.decode())
+            async with client.unfiltered_messages() as messages:
+                await client.subscribe("homeassistant/Sense/other_usage")
+                logging.info(f'Connected to MQTT Broker')
+                async for message in messages:
+                    print(message.payload.decode())
+
+    async def add_message_handler(self, topic, handler):
+        self.handlers.add((topic, handler))
 
 if __name__ == "__main__":
     pass

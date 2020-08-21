@@ -80,6 +80,28 @@ class SenseLink:
                 # Start controller
                 ds_controller.connect()
 
+            # MQTT Plugs
+            elif source_id.lower() == "mqtt":
+                # Configure this MQTT Data source
+                mqtt = source['mqtt']
+                if mqtt is None:
+                    logging.error(f"Configuration error for Source {source_id}")
+                host = mqtt['host']
+                port = mqtt['port']
+                username = mqtt['username'] or None
+                password = mqtt['password'] or None
+                mqtt_controller = MQTTController(host, port, username, password)
+
+                # Generate plug instances
+                plugs = mqtt['plugs']
+                logging.info("Generating instances")
+                instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_controller)
+
+                # Add instances to self
+                self._instances.extend(instances)
+
+                # Start controller
+                mqtt_controller.connect()
             else:
                 logging.error(f"Source type {source_id} not recognized")
 

@@ -199,4 +199,35 @@ class HASSSource(DataSource):
 class MQTTSource(DataSource):
     # Primary output property
     power = 0.0
-    pass
+
+    def add_controller(self, controller):
+        # Add self to passed-in MQTT Data Controller
+        if not isinstance(controller, MQTTController):
+            raise TypeError(
+                f"Incorrect controller type {type(self.controller).__name__} passed to MQTT Data Source")
+        super().add_controller(controller)
+
+    def __init__(self, identifier, details, controller):
+        super().__init__(identifier, details, controller)
+
+        if details is not None:
+            # Min/max values for the wattage reference from the source (i.e. 0 to 255 brightness, 0 to 100%, etc)
+            self.attribute_min = details.get('attribute_min') or 0.0
+            self.attribute_max = details.get('attribute_max') or 0.0
+
+            # MQTT Topics and handling
+            self.power_topic = details.get('power_topic') or None
+            self.power_topic_keypath = details.get('power_topic_keypath') or None
+            self.state_topic = details.get('state_topic') or 'state'
+            self.state_topic_keypath = details.get('state_topic_keypath') or None
+            self.on_state_value = details.get('on_state_value') or 'on'
+            self.off_state_value = details.get('off_state_value') or 'off'
+            self.attribute_topic = details.get('attribute_topic') or None
+            self.attribute_topic_keypath = details.get('attribute__topic_keypath') or None
+
+            if not any((self.attribute_topic, self.power_topic, self.state_topic)):
+                # Need at least ONE topic
+                raise AssertionError(
+                    f"At least one topic (power, attribute, or state) must be provided to monitor!")
+
+            self.attribute_delta = self.attribute_max - self.attribute_min
