@@ -115,24 +115,12 @@ class PlugInstance:
                     "sw_ver": "1.2.5 Build 171206 Rel.085954",
                     "hw_ver": "1.0",
                     "type": "IOT.SMARTPLUGSWITCH",
-                    "model": "HS110(US)",
+                    "model": "SenseLink",
                     "mac": self.mac.upper(),
                     "deviceId": self.device_id.upper(),
-                    "hwId": "60FF6B258734EA6880E186F8C96DDC61",
-                    "fwId": "00000000000000000000000000000000",
-                    "oemId": "FFF22CFF774A0B89F7624BFC6F50D5DE",
                     "alias": self.alias,
-                    "dev_name": "Wi-Fi Smart Plug With Energy Monitoring",
-                    "icon_hash": "",
                     "relay_state": 1,  # Assuming it's on, not sure it matters
                     "on_time": time() - self.start_time,
-                    "active_mode": "none",
-                    "feature": "TIM:ENE",
-                    "updating": 0,
-                    "rssi": -60,    # Great wifi signal
-                    "led_off": 0,   # Probably not important
-                    "latitude": 39.8283,    # Center of the US
-                    "longitude": -98.5795   # Center of the US
                 }
             }
         }

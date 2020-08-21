@@ -105,7 +105,7 @@ class HASSSource(DataSource):
 
             if self.attribute is None and self.power_keypath is None:
                 # No specific key or keypath defined, assuming base state key provides power usage
-                logging.debug(f"Defaulting to using base 'state' value for power usage")
+                logging.debug(f"Defaulting to using base state value for power usage for {self.entity_id}")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
@@ -155,36 +155,41 @@ class HASSSource(DataSource):
             logging.error(f'Error for entity {self.entity_id}: {err}, when parsing message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
-        if attribute_value is not None and (self.power_keypath is not None or self.attribute is None):
-            if self.power_keypath is not None:
-                # If using power_keypath, just use value for power update
-                logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
-            else:
-                logging.debug(f'Pulling power from base state value for {self.identifier}')
-
-            self.power = attribute_value
-
-            # Assume off if reported power usage is 0.0
-            if isclose(self.power, 0.0):
-                self.state = False
-        elif state_value is not None and state_value == self.off_state_value:
+        # Check if device is off as determined by state
+        if state_value is not None and state_value == self.off_state_value:
             # If user specifies a state value
             logging.debug(f"Entity {self.entity_id} set to off")
             # Device is off, set wattage appropriately
             self.power = self.off_usage
             self.state = False
-        elif attribute_value is not None:
-            logging.debug(f'Pulling power from attribute for {self.identifier}')
-            # Get attribute value and scale to provided values
-            # Clamp to specified min/max
-            clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
-            if attribute_value > clamp_attr or attribute_value < clamp_attr:
-                logging.error(f"Attribute for entity {self.entity_id} outside expected values")
+            return
 
-            # Use linear scaling (for now)
-            self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
-            self.power = self.min_watts + self.on_fraction * self.delta_watts
-            logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
+        # Otherwise, try to get an attribute or power value
+        if attribute_value is not None:
+            if self.power_keypath is not None or self.attribute is None:
+                if self.power_keypath is not None:
+                    # If using power_keypath, just use value for power update
+                    logging.debug(f'Pulling power from keypath: {self.power_keypath} for {self.identifier}')
+                else:
+                    logging.debug(f'Pulling power from base state value for {self.identifier}')
+
+                self.power = attribute_value
+
+                # Assume off if reported power usage is 0.0
+                if isclose(self.power, 0.0):
+                    self.state = False
+            else:
+                logging.debug(f'Pulling power from attribute for {self.identifier}')
+                # Get attribute value and scale to provided values
+                # Clamp to specified min/max
+                clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
+                if attribute_value > clamp_attr or attribute_value < clamp_attr:
+                    logging.error(f"Attribute for entity {self.entity_id} outside expected values")
+
+                # Use linear scaling (for now)
+                self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
+                self.power = self.min_watts + self.on_fraction * self.delta_watts
+                logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
         else:
             logging.info(f"Attribute update failure for {self.identifier}")
             raise ValueError(f'No valid attribute found for {self.identifier}')

@@ -8,6 +8,10 @@ import dpath.util
 from asyncio_mqtt import Client, MqttError
 import socket
 
+# Independently set WS logger
+wslogger = logging.getLogger('websockets')
+wslogger.setLevel(logging.ERROR)
+
 
 def safekey(d, keypath, default=None):
     try:
