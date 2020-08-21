@@ -7,6 +7,10 @@ import asyncio
 import dpath.util
 import socket
 
+# Independently set WS logger
+wslogger = logging.getLogger('websockets')
+wslogger.setLevel(logging.ERROR)
+
 
 def safekey(d, keypath, default=None):
     try:

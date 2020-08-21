@@ -107,7 +107,7 @@ class HASSSource(DataSource):
 
             if self.attribute is None and self.power_keypath is None:
                 # No specific key or keypath defined, assuming base state key provides power usage
-                logging.debug(f"Defaulting to using base state value for power usage")
+                logging.debug(f"Defaulting to using base state value for power usage for {self.entity_id}")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
