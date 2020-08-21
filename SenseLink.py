@@ -67,12 +67,11 @@ class SenseLink:
                     logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
                 auth_token = hass['auth_token']
-                print(f"{url}, {auth_token}")
                 ds_controller = HASSController(url, auth_token)
 
                 # Generate plug instances
                 plugs = hass['plugs']
-                print("Generating instances")
+                logging.info("Generating instances")
                 instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
 
                 # Add instances to self
