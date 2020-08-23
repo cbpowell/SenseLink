@@ -186,7 +186,7 @@ class HASSSource(DataSource):
                 else:
                     logging.debug(f'Pulling power from base state value for {self.identifier}')
 
-                self.power = attribute_value
+                parsed_power = attribute_value
 
                 # Assume off if reported power usage is 0.0
                 if isclose(self.power, 0.0):
