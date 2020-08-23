@@ -36,6 +36,16 @@ sources:
             attribute_max: 255
             attribute: brightness
             off_state_value: off
+
+        # Binary on/off state-based usage device
+        - Dehumidifier:
+            alias: "Dehumidifier"
+            entity_id: switch.dehumidifier
+            mac: 53:75:31:f6:4b:04
+            off_usage: 0
+            max_watts: 42  # Wattage used for 'on' state
+            on_state_value: "on"
+            off_state_value: "off"
   - static:
       plugs:
       - NAS:
