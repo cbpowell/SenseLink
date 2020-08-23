@@ -100,7 +100,7 @@ class HASSSource(DataSource):
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max') or 0.0
             # Websocket response key paths
-            self.state_path = details.get('state_keypath') or 'state'
+            self.state_keypath = details.get('state_keypath') or 'state'
             self.off_state_value = details.get('off_state_value') or 'off'
             self.attribute = details.get('attribute') or None
             self.attribute_keypath = details.get('attribute_keypath') or None
@@ -131,7 +131,7 @@ class HASSSource(DataSource):
 
     def parse_update(self, root_path, message):
         # State path
-        state_path = root_path + self.state_path
+        state_path = root_path + self.state_keypath
         # Figure out attribute path
         if self.power_keypath is not None:
             # Get value at power keypath as attribute
