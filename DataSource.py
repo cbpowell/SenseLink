@@ -4,7 +4,7 @@ import logging
 import dpath.util
 from math import isclose
 from DataController import HASSController
-from DataController import MQTTController
+from DataController import MQTTController, MQTTTopic
 
 
 def safekey(d, keypath, default=None):
@@ -236,3 +236,14 @@ class MQTTSource(DataSource):
                     f"At least one topic (power, attribute, or state) must be provided to monitor!")
 
             self.attribute_delta = self.attribute_max - self.attribute_min
+
+    def update_power(self, value):
+        self.power = value
+
+    def update_state(self, value):
+        self.state = value
+
+    def handlers(self):
+        power_handler = MQTTTopic(self.power_topic, self.update_power)
+        state_handler = MQTTTopic(self.state_topic, self.update_state)
+        return [power_handler, state_handler]

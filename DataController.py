@@ -7,6 +7,8 @@ import asyncio
 import dpath.util
 from socket import gaierror
 from asyncio_mqtt import Client, MqttError
+from contextlib import AsyncExitStack
+from typing import Dict
 
 # Independently set WS logger
 wslogger = logging.getLogger('websockets')
@@ -117,12 +119,24 @@ class HASSController:
             logging.debug(f"Unknown/unhandled message received: {message}")
 
 
+class MQTTTopic:
+    handlers = []
+
+    def __init__(self, topic, handler):
+        self.topic = topic
+        self.handlers.append(handler)
+
+    def __hash__(self):
+        return hash(self.topic)
+
+
 class MQTTController:
     data_sources = []
     user = None
     password = None
     client = None
-    handlers = set()
+    topics: Dict[str, MQTTTopic] = {}
+    tasks = set()
 
     def __init__(self, host, port=1883, username=None, password=None):
         self.host = host
@@ -136,29 +150,67 @@ class MQTTController:
 
     async def client_handler(self):
         logging.info(f"Starting MQTT client to URL: {self.host}")
+        reconnect_interval = 5  # [seconds]
         while True:
             try:
                 await self.listen()
             except MqttError as error:
-                logging.error(f'Disconnected from MQTT broker, reconnecting in 10...')
+                logging.error(f'Disconnected from MQTT broker, reconnecting in {reconnect_interval}... ({error}')
             finally:
-                await asyncio.sleep(10)
+                await asyncio.sleep(reconnect_interval)
 
     async def listen(self):
-        async with Client(self.host, self.port, username=self.username, password=self.password) as client:
-            # async with client.filtered_messages("homeassistant/Sense/other_usage") as messages:
-            #     await client.subscribe("senselink/#")
-            #     logging.info(f'Connected to MQTT Broker')
-            #     async for message in messages:
-            #         print(message.payload.decode())
-            async with client.unfiltered_messages() as messages:
-                await client.subscribe("homeassistant/Sense/other_usage")
-                logging.info(f'Connected to MQTT Broker')
-                async for message in messages:
-                    print(message.payload.decode())
+        async with AsyncExitStack() as stack:
+            # Track tasks
+            stack.push_async_callback(self.cancel_tasks, self.tasks)
 
-    async def add_message_handler(self, topic, handler):
-        self.handlers.add((topic, handler))
+            # Connect to the MQTT broker
+            client = Client(self.host, self.port, username=self.username, password=self.password)
+            await stack.enter_async_context(client)
+
+            # Add tasks for each data source handler
+            for ds in self.data_sources:
+                # Get handlers from data source
+                ds_handlers = ds.handlers()
+                # Iterate through and add handlers for each topic
+                # TODO: This could maybe just be handled by tuples, i.e. the data source
+                #  could just return (topic_str, [h1, h2, h3]), and then the handlers get
+                #  appended to the existing list. Not sure a custom class adds any value
+                for ds_hl in ds_handlers:
+                    if ds_hl.topic in self.topics:
+                        # Add these handlers to existing top level topic handler
+                        topic = self.topics[ds_hl.topic]
+                        topic.handlers.append(ds_hl.handlers)
+                    else:
+                        # Add this instance as a new top level handler
+                        self.topics[ds_hl.topic] = ds_hl
+
+            # Add handlers for each topic as a filtered topic
+            all_topics = []
+            for topic_string, topic in self.topics.items():
+                all_topics.append(topic)
+                manager = client.filtered_messages(topic_string)
+                messages = await stack.enter_async_context(manager)
+                for hl in topic.handlers:
+                    task = asyncio.create_task(hl(messages))
+                    self.tasks.add(task)
+
+            # Subscribe to all topics
+            await client.subscribe(all_topics)
+
+            # Gather all tasks
+            await asyncio.gather(*self.tasks)
+
+    async def cancel_tasks(self):
+        for task in self.tasks:
+            if task.done():
+                continue
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
 
 if __name__ == "__main__":
     pass

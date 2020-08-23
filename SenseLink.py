@@ -87,9 +87,9 @@ class SenseLink:
                 if mqtt is None:
                     logging.error(f"Configuration error for Source {source_id}")
                 host = mqtt['host']
-                port = mqtt['port']
-                username = mqtt['username'] or None
-                password = mqtt['password'] or None
+                port = mqtt.get('port') or 1883
+                username = mqtt.get('username') or None
+                password = mqtt.get('password') or None
                 mqtt_controller = MQTTController(host, port, username, password)
 
                 # Generate plug instances
