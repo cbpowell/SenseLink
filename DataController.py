@@ -6,7 +6,6 @@ import logging
 import asyncio
 import dpath.util
 from socket import gaierror
-from asyncio_mqtt import Client, MqttError
 
 # Independently set WS logger
 wslogger = logging.getLogger('websockets')
