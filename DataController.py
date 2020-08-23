@@ -5,7 +5,8 @@ import json
 import logging
 import asyncio
 import dpath.util
-import socket
+from socket import gaierror
+from asyncio_mqtt import Client, MqttError
 
 # Independently set WS logger
 wslogger = logging.getLogger('websockets')
@@ -51,7 +52,7 @@ class HASSController:
                         await asyncio.sleep(10)
                         asyncio.create_task(self.client_handler())
                         return False
-        except (websockets.exceptions.WebSocketException, socket.gaierror) as err:
+        except (websockets.exceptions.WebSocketException, gaierror) as err:
             logging.error(f"Unable to connect to server at {self.url} ({type(err)}:{err})")
             logging.info(f"Attempting to reconnect in 10...")
             await asyncio.sleep(10)
