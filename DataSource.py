@@ -20,7 +20,7 @@ def get_float_at_path(message, path, default_value=None):
     try:
         value = float(raw_value)
     except (ValueError, TypeError):
-        logging.error(f'Unable to convert attribute path {path} value ({raw_value}) to float, using {default_value}')
+        logging.debug(f'Unable to convert attribute path {path} value ({raw_value}) to float, using {default_value}')
         value = default_value
 
     return value
