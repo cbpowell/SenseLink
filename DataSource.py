@@ -15,14 +15,14 @@ def safekey(d, keypath, default=None):
         return default
 
 
-def get_attribute_at_path(message, path):
+def get_float_at_path(message, path, default_value=None):
     # Get attribute value, checking to force it to be a number
     raw_value = safekey(message, path)
     try:
         value = float(raw_value)
     except (ValueError, TypeError):
-        logging.error(f'Unable to convert attribute path {path} value ({raw_value}) to float, using 0.0')
-        value = 0.0
+        logging.debug(f'Unable to convert attribute path {path} value ({raw_value}) to float, using {default_value}')
+        value = default_value
 
     return value
 
@@ -98,8 +98,9 @@ class HASSSource(DataSource):
             self.attribute_min = details.get('attribute_min') or 0.0
             self.attribute_max = details.get('attribute_max') or 0.0
             # Websocket response key paths
-            self.state_path = details.get('state_keypath') or 'state'
+            self.state_keypath = details.get('state_keypath') or 'state'
             self.off_state_value = details.get('off_state_value') or 'off'
+            self.on_state_value = details.get('on_state_value') or None
             self.attribute = details.get('attribute') or None
             self.attribute_keypath = details.get('attribute_keypath') or None
 
@@ -129,7 +130,7 @@ class HASSSource(DataSource):
 
     def parse_update(self, root_path, message):
         # State path
-        state_path = root_path + self.state_path
+        state_path = root_path + self.state_keypath
         # Figure out attribute path
         if self.power_keypath is not None:
             # Get value at power keypath as attribute
@@ -146,7 +147,7 @@ class HASSSource(DataSource):
 
         # Pull values at determined paths
         state_value = safekey(message, state_path)
-        attribute_value = get_attribute_at_path(message, attribute_path)
+        attribute_value = get_float_at_path(message, attribute_path)
 
         # Try parsing values
         try:
@@ -155,16 +156,29 @@ class HASSSource(DataSource):
             logging.error(f'Error for entity {self.entity_id}: {err}, when parsing message: {message}')
 
     def parse_update_values(self, state_value, attribute_value):
+        # Start with a None value for the resulting power
+        parsed_power = None
+
         # Check if device is off as determined by state
         if state_value is not None and state_value == self.off_state_value:
-            # If user specifies a state value
-            logging.debug(f"Entity {self.entity_id} set to off")
-            # Device is off, set wattage appropriately
-            self.power = self.off_usage
+            # If user specifies a state value for OFF
+            logging.debug(f"Entity {self.entity_id} set to OFF based on state_value")
+            # Device is off - set wattage appropriately
+            parsed_power = self.off_usage
             self.state = False
+            self.power = parsed_power
             return
 
-        # Otherwise, try to get an attribute or power value
+        # Check if device is on as determined by state (if on_state_value defined)
+        if state_value is not None and state_value == self.on_state_value:
+            # If user specifies a state value for ON
+            logging.debug(f"Entity {self.entity_id} set to ON based on state_value")
+            # Device is on - set power to max_wattage, but this may be overwritten
+            # below if a valid attribute value is also found
+            parsed_power = self.max_watts
+            self.state = True
+
+        # Try to get an attribute or power value
         if attribute_value is not None:
             if self.power_keypath is not None or self.attribute is None:
                 if self.power_keypath is not None:
@@ -173,12 +187,13 @@ class HASSSource(DataSource):
                 else:
                     logging.debug(f'Pulling power from base state value for {self.identifier}')
 
-                self.power = attribute_value
+                parsed_power = attribute_value
 
                 # Assume off if reported power usage is 0.0
                 if isclose(self.power, 0.0):
                     self.state = False
-            else:
+            elif parsed_power is None:
+                # A state-based power
                 logging.debug(f'Pulling power from attribute for {self.identifier}')
                 # Get attribute value and scale to provided values
                 # Clamp to specified min/max
@@ -188,13 +203,15 @@ class HASSSource(DataSource):
 
                 # Use linear scaling (for now)
                 self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
-                self.power = self.min_watts + self.on_fraction * self.delta_watts
+                parsed_power = self.min_watts + self.on_fraction * self.delta_watts
                 logging.debug(f"Attribute {self.entity_id} at fraction: {self.on_fraction}")
-        else:
+
+        if parsed_power is None:
             logging.info(f"Attribute update failure for {self.identifier}")
             raise ValueError(f'No valid attribute found for {self.identifier}')
 
-        logging.info(f"Updated wattage for {self.identifier}: {self.get_power()}")
+        self.power = parsed_power
+        logging.info(f"Updated wattage for {self.identifier}: {parsed_power}")
 
     def get_power(self):
         # Return internal value
