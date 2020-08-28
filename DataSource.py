@@ -183,24 +183,28 @@ class HASSSource(DataSource):
         # Start with a None value for the resulting power
         parsed_power = None
 
-        # Check if device is off as determined by state
-        if state_value is not None and state_value == self.off_state_value:
-            # If user specifies a state value for OFF
-            logging.debug(f"Entity {self.identifier} set to OFF based on state_value")
-            # Device is off - set wattage appropriately
-            parsed_power = self.off_usage
-            self.state = False
-            self.power = parsed_power
-            return
+        if state_value is not None:
+            # Check if device is off as determined by state
+            if state_value == self.off_state_value:
+                # If user specifies a state value for OFF
+                logging.debug(f"Entity {self.identifier} set to OFF based on state_value")
+                # Device is off - set wattage appropriately
+                parsed_power = self.off_usage
+                self.state = False
+                self.power = parsed_power
+                logging.info(f"Updated wattage for {self.identifier}: {parsed_power}")
+                # Do not continue execution, as attribute_value could still be populated
+                # but this plug is defined to be OFF at this stage
+                return
 
-        # Check if device is on as determined by state (if on_state_value defined)
-        if state_value is not None and state_value == self.on_state_value:
-            # If user specifies a state value for ON
-            logging.debug(f"Entity {self.identifier} set to ON based on state_value")
-            # Device is on - set power to max_wattage, but this may be overwritten
-            # below if a valid attribute value is also found
-            parsed_power = self.max_watts
-            self.state = True
+            # Check if device is on as determined by state (if on_state_value defined)
+            if state_value == self.on_state_value:
+                # If user specifies a state value for ON
+                logging.debug(f"Entity {self.identifier} set to ON based on state_value")
+                # Device is on - set power to max_wattage, but this may be overwritten
+                # below if a valid attribute value is also found
+                parsed_power = self.max_watts
+                self.state = True
 
         # Try to get an attribute or power value
         if attribute_value is not None:
