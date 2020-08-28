@@ -2,6 +2,7 @@
 
 import logging
 import dpath.util
+import asyncio
 from math import isclose
 from DataController import HASSController
 from DataController import MQTTController, MQTTListener
@@ -225,10 +226,7 @@ class HASSSource(DataSource):
 class MQTTSource(DataSource):
     # Primary output property
     power = 0.0
-    # Store most recent MQTT values for topics
-    power_value = None
-    state_value = None
-    attribute_value = None
+    timer = None
 
     def add_controller(self, controller):
         # Add self to passed-in MQTT Data Controller
@@ -253,7 +251,8 @@ class MQTTSource(DataSource):
             self.on_state_value = details.get('on_state_value') or 'on'
             self.off_state_value = details.get('off_state_value') or 'off'
             self.attribute_topic = details.get('attribute_topic') or None
-            self.attribute_topic_keypath = details.get('attribute__topic_keypath') or None
+            self.attribute_topic_keypath = details.get('attribute_topic_keypath') or None
+            self.timeout_duration = details.get('timeout_duration') or None
 
             if not any((self.attribute_topic, self.power_topic, self.state_topic)):
                 # Need at least ONE topic
@@ -267,12 +266,27 @@ class MQTTSource(DataSource):
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
-    def update_power(self, value):
+    async def timeout(self, timeout_value):
+        # Sleep for specified time (seconds)
+        await asyncio.sleep(timeout_value)
+        # If we get here, set to off_usage
+        self.update_power(self.off_usage, timeout=False)
+        self.state = False
+        logging.info(f'Update timeout reached for {self.identifier}, setting to off_usage')
+        logging.debug(f'Power: {self.power}')
+
+    def update_power(self, value, timeout=True):
         try:
             fval = float(value)
         except ValueError:
             logging.warning(f'Failed to convert power value ("{value}") for {self.identifier} to float, ignoring')
             return
+
+        # Reset previous timer
+        if self.timeout_duration is not None and timeout:
+            if self.timer is not None:
+                self.timer.cancel()
+            self.timer = asyncio.create_task(self.timeout(self.timeout_duration))
 
         if not isclose(fval, self.power):
             self.power = fval

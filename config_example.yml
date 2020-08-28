@@ -72,6 +72,10 @@ sources:
             attribute_max: 255
             min_watts: 0
             max_watts: 120
+            timeout_duration: 3600  # Seconds
+                # Use If the device will normally publish updates on at least a regular interval, and you
+                #  want to assume the "off" state if it misses that interval (*technically* this
+                #  should be done via MQTT's Last Will & Testament feature...)
 
   - static:
       plugs:
