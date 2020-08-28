@@ -32,7 +32,7 @@ def keys_exist(element, *keys):
 class SenseLink:
     _remote_ep = None
     _local_ep = None
-    _instances = []
+    _instances = {}
     should_respond = True
 
     def __init__(self, config, port=9999):
@@ -57,7 +57,7 @@ class SenseLink:
                 # Generate plug instances
                 plugs = static['plugs']
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
-                self._instances.extend(instances)
+                self.add_instances(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
             elif source_id.lower() == "hass":
@@ -73,9 +73,7 @@ class SenseLink:
                 plugs = hass['plugs']
                 logging.info("Generating instances")
                 instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
-
-                # Add instances to self
-                self._instances.extend(instances)
+                self.add_instances(instances)
 
                 # Start controller
                 ds_controller.connect()
@@ -96,14 +94,23 @@ class SenseLink:
                 plugs = mqtt['plugs']
                 logging.info("Generating instances")
                 instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_controller)
-
-                # Add instances to self
-                self._instances.extend(instances)
+                self.add_instances(instances)
 
                 # Start controller
                 mqtt_controller.connect()
             else:
                 logging.error(f"Source type {source_id} not recognized")
+
+    def add_instances(self, instances):
+        # Check for duplicated MAC
+        union_macs = [val for val in instances.keys() if val in self._instances.keys()]
+        if any(union_macs):
+            # Assertion error - can't use the same MAC twice!
+            raise AssertionError(
+                f"Configuration Error: Two plugs configured with the same MAC address! ({union_macs})")
+
+        # Add to global instances
+        self._instances = {**self._instances, **instances}
 
     def print_instance_wattages(self):
         for inst in self._instances:

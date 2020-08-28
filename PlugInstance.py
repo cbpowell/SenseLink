@@ -5,6 +5,7 @@ import logging
 from DataSource import DataSource
 from typing import Type
 from time import time
+from typing import Dict
 
 
 # Generator for random MAC address
@@ -63,9 +64,9 @@ class PlugInstance:
 
     @classmethod
     # Convenience method to create a lot of plugs
-    def configure_plugs(cls, plugs, data_source_class: Type[DataSource], data_controller=None):
+    def configure_plugs(cls, plugs, data_source_class: Type[DataSource], data_controller=None) -> Dict:
         # Loop through all plugs
-        instances = []
+        instances = {}
         for plug in plugs:
             # Get specified identifier
             plug_id = next(iter(plug.keys()))
@@ -82,7 +83,16 @@ class PlugInstance:
 
                 # Generate data source with details, and assign
                 instance.data_source = data_source_class(plug_id, details, data_controller)
-                instances.append(instance)
+
+                # Check if this MAC has already be used
+                if mac in instances.keys():
+                    # Assertion error - can't use the same MAC twice!
+                    prev_id = instances[mac]
+                    raise AssertionError(
+                        f"Configuration Error: Two plugs configured with the same MAC address! ({prev_id}, {plug_id})")
+
+                # Add this plug to list of instances
+                instances[mac] = instance
 
                 logging.debug(f"Added plug: {plug_id}")
 
