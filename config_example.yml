@@ -1,4 +1,5 @@
 sources:
+# Home Assistant
 - hass:
     url: "ws://your.HASS.API.URL.here"
     auth_token: "your_token_here"
@@ -46,6 +47,8 @@ sources:
             max_watts: 42  # Wattage used for 'on' state
             on_state_value: "on"
             off_state_value: "off"
+
+# MQTT
 - mqtt:
     host: "your.mqtt.broker"
     port: 1883       # Optional
@@ -80,6 +83,7 @@ sources:
                 #  want to assume the "off" state if it misses that interval (*technically* this
                 #  should be done via MQTT's Last Will & Testament feature...)
 
+# Static
   - static:
       plugs:
       - NAS:
@@ -90,3 +94,16 @@ sources:
           mac: 53:75:31:f6:4c:02
           max_watts: 5
           alias: "Ceiling Fan"
+
+# Aggregate
+  - aggregate:
+      plugs:
+      - agg1:
+          alias: "Kitchen Aggregate"
+          mac: 50:c7:bf:f6:4e:01
+          # Specify plug ID values (keys) to aggregate and report as a single value
+          # Aggregate plug will update dynamically as the element reported powers change!
+          # Useful to stay under the ~20 plug Sense limit
+          elements:
+            - Fan
+            - Kitchen_Lights
