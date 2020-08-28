@@ -1,7 +1,7 @@
 # SenseLink
 A tool to inform a Sense Home Energy Monitor of **known** energy usage in your home, written in Python. A Docker image is also provided!
 
-If you're sourcing your energy usage from ESP8266/ESP32 devices via ESPHome, check out my partner project [ESPSense](https://github.com/cbpowell/ESPSense)! You might be able to report power usage to Sense directly from your device.
+If you're sourcing your energy usage from ESP8266/ESP32 devices via ESPHome, check out my partner project [ESPSense](https://github.com/cbpowell/ESPSense)! You might be able to report power usage to Sense directly from your device, including other cheap commercial Smart Plugs!
 
 # About
 SenseLink is a tool that emulates the energy monitoring functionality of [TP-Link Kasa HS110](https://www.tp-link.com/us/home-networking/smart-plug/hs110/) Smart Plugs, and allows you to report "custom" power usage to your [Sense Home Energy Monitor](https://sense.com) based on other parameters.
@@ -10,7 +10,7 @@ SenseLink can emulate multiple plugs at the same time, and can report:
 1. Static/unchanging power usage
 2. Dynamic power usage based on other parameters through API integrations (e.g. a dimmer brightness value)
 
-At the moment the only API integration is with a [Home Assistant](https://www.home-assistant.io) Websockets API, but other integrations should be relatively easy to implement! SenseLink could also be used to bridge power usage data from other smart plugs that aren't supported by Sense.
+At the moment, dynamic power plugs can source data from the [Home Assistant](https://www.home-assistant.io) (Websockets API) and MQTT. Plus, other integrations should be relatively easy to implement!
 
 While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-frequently-asked-questions/7211) use the data from smart plugs for device detection algorithm training, you should be a good citizen and try only provide accurate data! Not to mention, incorrectly reporting your own data hurts your own monitoring as well!
 
@@ -22,6 +22,7 @@ Configuration is defined through a YAML file, that should be passed in when crea
 
 The YAML configuration file should start with a top level `sources` key, which defines an array of sources for power data. Each source then has a `plugs` key to define an array of individual emulated plugs, plugs other configuration details as needed for that particular source. The current supported sources types are:
 - `hass`: Home Assistant, via the Websockets API
+- `mqtt`: MQTT, via a MQTT broker
 - `static`: Plugs with unchanging power values
 
 See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
@@ -46,10 +47,13 @@ A minimum plug definition will look like the following:
     max_watts: 15
     alias: "Basic Plug"
 ```
+
+## Dynamic Plug Definition
 More "advanced" plugs using smarthome/IoT integrations will require more details - see [the wiki configuration pages](https://github.com/cbpowell/SenseLink/wiki) for more information!
 
 1. [Static plugs](https://github.com/cbpowell/SenseLink/wiki/Static-Plugs)
 2. [Home Assistant plugs](https://github.com/cbpowell/SenseLink/wiki/Home-Assistant-Plugs)
+3. [MQTT plugs](https://github.com/cbpowell/SenseLink/wiki/MQTT-Plugs)
 
 
 # Usage
