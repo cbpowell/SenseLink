@@ -26,7 +26,6 @@ def get_float_at_path(message, path, default_value=None):
 
     return value
 
-
 class DataSource:
     voltage = 120
     instances = []
@@ -166,7 +165,7 @@ class HASSSource(DataSource):
         # Check if device is off as determined by state
         if state_value is not None and state_value == self.off_state_value:
             # If user specifies a state value for OFF
-            logging.debug(f"Entity {self.entity_id} set to OFF based on state_value")
+            logging.debug(f"Entity {self.identifier} set to OFF based on state_value")
             # Device is off - set wattage appropriately
             parsed_power = self.off_usage
             self.state = False
@@ -176,7 +175,7 @@ class HASSSource(DataSource):
         # Check if device is on as determined by state (if on_state_value defined)
         if state_value is not None and state_value == self.on_state_value:
             # If user specifies a state value for ON
-            logging.debug(f"Entity {self.entity_id} set to ON based on state_value")
+            logging.debug(f"Entity {self.identifier} set to ON based on state_value")
             # Device is on - set power to max_wattage, but this may be overwritten
             # below if a valid attribute value is also found
             parsed_power = self.max_watts
@@ -198,7 +197,7 @@ class HASSSource(DataSource):
                     self.state = False
             elif parsed_power is None:
                 # A state-based power
-                logging.debug(f'Pulling power from attribute for {self.identifier}')
+                logging.debug(f'Determining power based on attribute for {self.identifier}')
                 # Get attribute value and scale to provided values
                 # Clamp to specified min/max
                 clamp_attr = min(max(self.attribute_min, attribute_value), self.attribute_max)
