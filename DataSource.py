@@ -192,8 +192,8 @@ class HASSSource(DataSource):
 
                 parsed_power = attribute_value
 
-                # Assume off if reported power usage is 0.0
-                if isclose(self.power, 0.0):
+                # Assume off if reported power usage is close to off_usage
+                if isclose(self.power, self.off_usage):
                     self.state = False
             elif parsed_power is None:
                 # A state-based power
