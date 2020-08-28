@@ -54,11 +54,13 @@ sources:
     plugs:
         # Direct power reporting example
         - UPS:
+            mac: 53:75:31:f6:4d:01
             alias: "UPS Backup"
             power_topic: server_ups/usage  # Value at this topic should be numeric and units of watts!
         # Direct power, with state
         - VacuumCharger:
             alias: "Vacuum Charger"
+            mac: 53:75:31:f6:4d:02
             power_topic: vacuum/usage
             state_topic: vacuum/charging_state
             on_state_value: "charging"
@@ -67,6 +69,7 @@ sources:
         # Scaled attribute (dimmer setting) example
         - Porch_Light:
             alias: "Back Porch Light"
+            mac: 53:75:31:f6:4d:03
             attribute_topic: "lights/porch/brightness"
             attribute_min: 0
             attribute_max: 255
