@@ -247,7 +247,7 @@ class MQTTSource(DataSource):
             # MQTT Topics and handling
             self.power_topic = details.get('power_topic') or None
             self.power_topic_keypath = details.get('power_topic_keypath') or None
-            self.state_topic = details.get('state_topic') or 'state'
+            self.state_topic = details.get('state_topic') or None
             self.state_topic_keypath = details.get('state_topic_keypath') or None
             self.on_state_value = details.get('on_state_value') or 'on'
             self.off_state_value = details.get('off_state_value') or 'off'
