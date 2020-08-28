@@ -26,6 +26,7 @@ def get_float_at_path(message, path, default_value=None):
 
     return value
 
+
 class DataSource:
     voltage = 120
     instances = []
@@ -266,42 +267,43 @@ class MQTTSource(DataSource):
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
-    async def update_power(self, value):
-        logging.debug(f'Power topic update for {self.identifier}: {value}')
-        # Check if this direct power value changes the current understanding
-        # of the device state
+    def update_power(self, value):
         try:
             fval = float(value)
-        except ValueError as err:
+        except ValueError:
             logging.warning(f'Failed to convert power update value ("{value}") for {self.identifier} to float, ignoring')
             return
 
         if not isclose(fval, self.power):
-            # Trust this as the "new" power
             self.power = fval
             # Assume off if reported power usage is close to off_usage
             if isclose(self.power, self.off_usage):
                 self.state = False
-            logging.debug(f'Power updated for {self.identifier}: {fval}')
+                logging.debug(f'Power equal to off_usage for {self.identifier}, assuming off')
+            logging.debug(f'Power updated for {self.identifier}: {round(fval, 4)}')
 
-    async def update_state(self, value):
+    async def power_handler(self, value):
+        logging.debug(f'Power topic update for {self.identifier}: {value}')
+        self.update_power(value)
+
+    async def state_handler(self, value):
         logging.debug(f'State topic update for {self.identifier}: {value}')
         # Act immediate if state is being set to off
         if value == self.off_state_value:
             # Device is off
-            self.power = self.off_usage
             self.state = False
+            self.update_power(self.off_usage)
         elif value == self.on_state_value:
             # Device is on, but action depends on if a attribute topic is also defined,
             # to distinguish between a state+attribute plug or a state-only plug
             if self.attribute_topic is not None:
-                # Update state only, do not assume wattage
+                # Update state only, do not assume wattage because it may be updated separately
                 # Wattage will be whatever the most recent wattage value was!
                 self.state = True
             else:
                 # Update state and set to max_wattage for a binary type plug
                 self.state = True
-                self.power = self.max_watts
+                self.update_power(self.max_watts)
         else:
             # State does not match on or off values, so check if it's a float
             try:
@@ -309,11 +311,11 @@ class MQTTSource(DataSource):
                 if self.power_topic is None:
                     # No power topic defined, so use this numeric value as power
                     logging.debug(f'State update is numeric and no power_topic defined, using as power value')
-                    await self.update_power(fstate)
+                    self.update_power(fstate)
             except ValueError:
                 logging.debug(f'State update ("{value}") is non-numeric and does not match on/off values, ignoring')
 
-    async def update_attribute(self, value):
+    async def attribute_handler(self, value):
         logging.debug(f'Attribute topic update for {self.identifier}: {value}')
         # Get attribute value and scale to provided values
         try:
@@ -332,7 +334,7 @@ class MQTTSource(DataSource):
         # Use linear scaling (for now)
         self.on_fraction = (clamp_attr - self.attribute_min) / self.attribute_delta
         scaled_power = self.min_watts + self.on_fraction * self.delta_watts
-        await self.update_power(scaled_power)
+        self.update_power(scaled_power)
         logging.debug(f"Attribute {self.identifier} at fraction: {self.on_fraction}")
 
     def listeners(self) -> [MQTTListener]:
@@ -340,11 +342,10 @@ class MQTTSource(DataSource):
         logging.info(f'Generating listeners for {self.identifier}')
         listeners = []
         if self.power_topic is not None:
-            listeners.append(MQTTListener(self.power_topic, [self.update_power]))
+            listeners.append(MQTTListener(self.power_topic, [self.power_handler]))
         if self.state_topic is not None:
-            listeners.append(MQTTListener(self.state_topic, [self.update_state]))
+            listeners.append(MQTTListener(self.state_topic, [self.state_handler]))
         if self.attribute_topic is not None:
-            listeners.append(MQTTListener(self.attribute_topic, [self.update_attribute]))
+            listeners.append(MQTTListener(self.attribute_topic, [self.attribute_handler]))
 
         return listeners
-
