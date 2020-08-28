@@ -197,7 +197,7 @@ class MQTTController:
             # Subscribe to all topics
             # Assume QoS 0 for now
             all_topics = [(t, 0) for t in self.topics.keys()]
-            logging.info(f'Subscribing to MQTT {all_topics.count()} topics')
+            logging.info(f'Subscribing to MQTT {len(all_topics)} topic(s)')
             logging.debug(f'Topics: {all_topics}')
             try:
                 await client.subscribe(all_topics)
@@ -205,17 +205,17 @@ class MQTTController:
                 logging.error(f'MQTT Subscribe error: {err}')
 
             # Gather all tasks
-            logging.debug(f'Gathering tasks: {self.tasks}')
             await asyncio.gather(*self.tasks)
+            logging.info(f'Listening for MQTT updates')
 
     async def parse_messages(self, messages):
         async for message in messages:
             topic = message.topic
             # Get handlers and iterate through
             listener = self.topics[topic]
-            logging.debug(f'listeners: {listener}')
             for func in listener.handlers:
-                await func(message.payload)
+                # Decode to UTF-8
+                await func(message.payload.decode())
 
     async def cancel_tasks(self):
         for task in self.tasks:
