@@ -55,10 +55,15 @@ sources:
         # Direct power reporting example
         - UPS:
             alias: "UPS Backup"
-            power_topic: "ups/usage"  # Value at this topic should be numeric and units of watts!
-            state_topic: "ups/state"
-            off_state_value: "OFF"
-            off_value: 0   # Optional, set to non-zero for vampire loads
+            power_topic: server_ups/usage  # Value at this topic should be numeric and units of watts!
+        # Direct power, with state
+        - VacuumCharger:
+            alias: "Vacuum Charger"
+            power_topic: vacuum/usage
+            state_topic: vacuum/charging_state
+            on_state_value: "charging"
+            off_state_value: "not charging"
+            off_usage: 1  # 1W vampire draw, reported when the state topic value is "not charging"
         # Scaled attribute (dimmer setting) example
         - Porch_Light:
             alias: "Back Porch Light"
@@ -67,16 +72,6 @@ sources:
             attribute_max: 255
             min_watts: 0
             max_watts: 120
-        # State embedded in JSON value
-        # Use if the MQTT topic returns a JSON dict instead of a single value
-        - LED_Strip:
-            alias: "TV LED Strips"
-            attribute_topic: "leds/living_room_tv/state"
-            attribute_topic_keypath: "settings/brightness"  # Ex: if value at topic were {"settings":{"color":"red", "brightness": 75}}
-            attribute_min: 0
-            attribute_max: 100
-            min_watts: 0
-            max_watts: 15
 
   - static:
       plugs:
