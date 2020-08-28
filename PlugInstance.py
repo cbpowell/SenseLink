@@ -40,20 +40,21 @@ def generate_deviceid():
 class PlugInstance:
     start_time = None
     data_source = None
+    in_aggregate = False  # Assume not in aggregate to start
 
     def __init__(self, identifier, alias=None, mac=None, device_id=None):
         self.identifier = identifier
         if mac is None:
-            gen_mac = generate_mac(oui='53:75:31')
-            logging.info("Spoofed MAC: %s", gen_mac)
-            self.mac = gen_mac
+            new_mac = generate_mac(oui='53:75:31')
+            logging.info("Spoofed MAC: %s", new_mac)
+            self.mac = new_mac
         else:
             self.mac = mac
 
         if device_id is None:
-            gen_device_id = generate_deviceid()
-            logging.info("Spoofed Device ID: %s", gen_device_id)
-            self.device_id = gen_device_id
+            new_device_id = generate_deviceid()
+            logging.info("Spoofed Device ID: %s", new_device_id)
+            self.device_id = new_device_id
         else:
             self.device_id = device_id
 

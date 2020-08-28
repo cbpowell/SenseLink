@@ -9,8 +9,12 @@ from DataSource import *
 from PlugInstance import *
 from TPLinkEncryption import *
 from aioudp import *
-import nest_asyncio
-nest_asyncio.apply()
+
+STATIC_KEY = 'static'
+HASS_KEY = 'hass'
+MQTT_KEY = 'mqtt'
+AGG_KEY = 'aggregate'
+PLUGS_KEY = 'plugs'
 
 
 # Check if a multi-layer key exists
@@ -32,37 +36,42 @@ def keys_exist(element, *keys):
 class SenseLink:
     _remote_ep = None
     _local_ep = None
-    _instances = {}
     should_respond = True
+    has_aggregate = False
 
     def __init__(self, config, port=9999):
         self.config = config
         self.port = port
         self.server_task = None
+        self._instances = {}
+        self._agg_instances = {}
 
     def create_instances(self):
         config = yaml.load(self.config, Loader=yaml.FullLoader)
         logging.debug(f"Configuration loaded: {config}")
         sources = config.get('sources')
+        aggregate = None
+
         for source in sources:
             # Get specified identifier
             source_id = next(iter(source.keys()))
             logging.debug(f"Adding {source_id} configuration")
             # Static value plugs
-            if source_id.lower() == "static":
+            if source_id.lower() == STATIC_KEY:
                 # Static sources require no extra config
-                static = source['static']
+                static = source[STATIC_KEY]
                 if static is None:
                     logging.error(f"Configuration error for Source {source_id}")
                 # Generate plug instances
-                plugs = static['plugs']
+                plugs = static[PLUGS_KEY]
+                logging.info("Generating Static instances")
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self.add_instances(instances)
 
             # HomeAssistant Plugs, using Websockets datasource
-            elif source_id.lower() == "hass":
+            elif source_id.lower() == HASS_KEY:
                 # Configure this HASS Data source
-                hass = source['hass']
+                hass = source[HASS_KEY]
                 if hass is None:
                     logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
@@ -70,8 +79,8 @@ class SenseLink:
                 ds_controller = HASSController(url, auth_token)
 
                 # Generate plug instances
-                plugs = hass['plugs']
-                logging.info("Generating instances")
+                plugs = hass[PLUGS_KEY]
+                logging.info("Generating HASS instances")
                 instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
                 self.add_instances(instances)
 
@@ -79,9 +88,9 @@ class SenseLink:
                 ds_controller.connect()
 
             # MQTT Plugs
-            elif source_id.lower() == "mqtt":
+            elif source_id.lower() == MQTT_KEY:
                 # Configure this MQTT Data source
-                mqtt = source['mqtt']
+                mqtt = source[MQTT_KEY]
                 if mqtt is None:
                     logging.error(f"Configuration error for Source {source_id}")
                 host = mqtt['host']
@@ -91,15 +100,49 @@ class SenseLink:
                 mqtt_controller = MQTTController(host, port, username, password)
 
                 # Generate plug instances
-                plugs = mqtt['plugs']
-                logging.info("Generating instances")
+                plugs = mqtt[PLUGS_KEY]
+                logging.info("Generating MQTT instances")
                 instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_controller)
                 self.add_instances(instances)
 
                 # Start controller
                 mqtt_controller.connect()
+
+            # Aggregate-type Plugs
+            elif source_id.lower() == AGG_KEY:
+                # Only one aggregate key allowed
+                if self.has_aggregate:
+                    # Already defined, ignore this one
+                    logging.warning(f"Multiple 'aggregate' groups defined - only one group is allowed. Ignoring this \
+                    and all subsequent!")
+                    continue
+                self.has_aggregate = True
+                aggregate = source[AGG_KEY]
             else:
-                logging.error(f"Source type {source_id} not recognized")
+                logging.error(f"Source type '{source_id}' not recognized")
+
+        if aggregate is not None:
+            # Handle aggregate plugs, now that all instances are defined
+            # Generate plug instances
+            plugs = aggregate[PLUGS_KEY]
+            logging.info("Generating Aggregate instances")
+            instances = PlugInstance.configure_plugs(plugs, AggregateSource)
+            for inst in instances.values():
+                # Grab data source for this instance
+                ag_ds = inst.data_source
+                # So that we can get the element IDs (i.e. plug_id's)
+                element_ids = ag_ds.element_ids
+                # Use those element_ids to get actual instances from global instance dict
+                elements = []
+                for plug in self._instances.values():
+                    if plug.identifier in element_ids:
+                        # We want this plug
+                        elements.append(plug)
+                        plug.in_aggregate = True
+                # Pass these elements (top-level plugs) back to Aggregate data source
+                ag_ds.elements = elements
+            # Add these aggregate plugs to the instance list
+            self.add_instances(instances)
 
     def add_instances(self, instances):
         # Check for duplicated MAC
@@ -147,6 +190,12 @@ class SenseLink:
 
                     # Build and send responses
                     for inst in self._instances:
+                        # Check if this instance is in an aggregate
+                        if inst.in_aggregate:
+                            # Do not send individual response for this plug
+                            logging.debug(f"Plug '{inst.identifier}' in aggregate, not sending discrete response")
+                            continue
+
                         if inst.start_time is None:
                             inst.start_time = server_start
                         # Build response
@@ -165,7 +214,7 @@ class SenseLink:
                             # Do not send response, but log for debugging
                             logging.debug(f"SENSE_RESPONSE disabled, response content: {response}")
                 else:
-                    logging.info(f"Unexpected/unhandled message: {json_data}")
+                    logging.warning(f"Unexpected/unhandled message: {json_data}")
 
             # Appears to not be JSON
             except ValueError:

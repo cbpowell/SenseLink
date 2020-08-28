@@ -79,6 +79,26 @@ class DataSource:
             self.controller.data_sources.append(self)
 
 
+class AggregateSource(DataSource):
+    # Primary output property
+    power = 0.0
+
+    def __init__(self, identifier, details, controller):
+        super().__init__(identifier, details, controller)
+
+        self.elements = []
+
+        if details is not None:
+            self.element_ids = details.get('elements') or []
+
+    def get_power(self):
+        # Get power values from individual elements, and sum
+        plug_powers = list(map(lambda plug: plug.power, self.elements))
+        sum_power = sum(plug_powers)
+        logging.debug(f"Aggregate plug '{self.identifier} sum power: {sum_power}")
+        return sum_power
+
+
 class HASSSource(DataSource):
     # Primary output property
     power = 0.0
