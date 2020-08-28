@@ -189,7 +189,7 @@ class SenseLink:
                         self._remote_ep = await open_remote_endpoint(request_addr, self.port)
 
                     # Build and send responses
-                    for inst in self._instances:
+                    for inst in self._instances.values():
                         # Check if this instance is in an aggregate
                         if inst.in_aggregate:
                             # Do not send individual response for this plug
