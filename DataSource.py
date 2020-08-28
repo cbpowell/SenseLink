@@ -271,7 +271,7 @@ class MQTTSource(DataSource):
         try:
             fval = float(value)
         except ValueError:
-            logging.warning(f'Failed to convert power update value ("{value}") for {self.identifier} to float, ignoring')
+            logging.warning(f'Failed to convert power value ("{value}") for {self.identifier} to float, ignoring')
             return
 
         if not isclose(fval, self.power):
@@ -321,7 +321,7 @@ class MQTTSource(DataSource):
         try:
             attribute_value = float(value)
         except ValueError:
-            logging.warning(f'Non-float value ("{value}") recieved for attribute update, unable to update!')
+            logging.warning(f'Non-float value ("{value}") received for attribute update, unable to update!')
             self.power = self.off_usage
             self.state = False
             return
