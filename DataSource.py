@@ -95,7 +95,6 @@ class AggregateSource(DataSource):
         # Get power values from individual elements, and sum
         plug_powers = list(map(lambda plug: plug.power, self.elements))
         sum_power = sum(plug_powers)
-        logging.debug(f"Aggregate plug '{self.identifier} sum power: {sum_power}")
         return sum_power
 
 
