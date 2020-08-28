@@ -10,7 +10,7 @@ SenseLink can emulate multiple plugs at the same time, and can report:
 1. Static/unchanging power usage
 2. Dynamic power usage based on other parameters through API integrations (e.g. a dimmer brightness value)
 
-At the moment, dynamic power plugs can source data from the [Home Assistant](https://www.home-assistant.io) Websockets API and MQTT. Plus, other integrations should be relatively easy to implement!
+At the moment, dynamic power plugs can source data from the [Home Assistant](https://www.home-assistant.io) (Websockets API) and MQTT. Plus, other integrations should be relatively easy to implement!
 
 While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-frequently-asked-questions/7211) use the data from smart plugs for device detection algorithm training, you should be a good citizen and try only provide accurate data! Not to mention, incorrectly reporting your own data hurts your own monitoring as well!
 
