@@ -12,7 +12,10 @@ from typing import Dict
 
 # Independently set WS logger
 wslogger = logging.getLogger('websockets')
-wslogger.setLevel(logging.ERROR)
+wslogger.setLevel(logging.WARNING)
+
+MQTT_LOGGER = logging.getLogger('mqtt')
+MQTT_LOGGER.setLevel(logging.WARNING)
 
 
 def safekey(d, keypath, default=None):
@@ -119,23 +122,16 @@ class HASSController:
             logging.debug(f"Unknown/unhandled message received: {message}")
 
 
-class MQTTTopic:
-    handlers = []
-
-    def __init__(self, topic, handler):
+class MQTTListener:
+    def __init__(self, topic, hndls=None):
         self.topic = topic
-        self.handlers.append(handler)
-
-    def __hash__(self):
-        return hash(self.topic)
+        self.handlers = []
+        self.handlers.extend(hndls)
 
 
 class MQTTController:
-    data_sources = []
-    user = None
-    password = None
     client = None
-    topics: Dict[str, MQTTTopic] = {}
+    topics: Dict[str, MQTTListener] = None
     tasks = set()
 
     def __init__(self, host, port=1883, username=None, password=None):
@@ -143,6 +139,9 @@ class MQTTController:
         self.port = port
         self.username = username
         self.password = password
+
+        self.data_sources = []
+        self.topics = {}
 
     def connect(self):
         # Create task
@@ -162,44 +161,61 @@ class MQTTController:
     async def listen(self):
         async with AsyncExitStack() as stack:
             # Track tasks
-            stack.push_async_callback(self.cancel_tasks, self.tasks)
+            stack.push_async_callback(self.cancel_tasks)
 
             # Connect to the MQTT broker
             client = Client(self.host, self.port, username=self.username, password=self.password)
             await stack.enter_async_context(client)
 
+            logging.info(f'MQTT client connected')
             # Add tasks for each data source handler
             for ds in self.data_sources:
                 # Get handlers from data source
-                ds_handlers = ds.handlers()
-                # Iterate through and add handlers for each topic
-                # TODO: This could maybe just be handled by tuples, i.e. the data source
-                #  could just return (topic_str, [h1, h2, h3]), and then the handlers get
-                #  appended to the existing list. Not sure a custom class adds any value
-                for ds_hl in ds_handlers:
-                    if ds_hl.topic in self.topics:
+                ds_listeners = ds.listeners()
+                # Iterate through data source listeners and convert to
+                # 'prime' listeners for each topic
+                for listener in ds_listeners:
+                    topic = listener.topic
+                    funcs = listener.handlers
+                    if topic in self.topics:
                         # Add these handlers to existing top level topic handler
-                        topic = self.topics[ds_hl.topic]
-                        topic.handlers.append(ds_hl.handlers)
+                        logging.debug(f'Adding handlers for existing prime Listener: {topic}')
+                        ext_topic = self.topics[topic]
+                        ext_topic.handlers.extend(funcs)
                     else:
                         # Add this instance as a new top level handler
-                        self.topics[ds_hl.topic] = ds_hl
+                        logging.debug(f'Creating new prime Listener for topic: {topic}')
+                        self.topics[topic] = MQTTListener(topic, funcs)
 
             # Add handlers for each topic as a filtered topic
-            all_topics = []
-            for topic_string, topic in self.topics.items():
-                all_topics.append(topic)
-                manager = client.filtered_messages(topic_string)
+            for topic, listener in self.topics.items():
+                manager = client.filtered_messages(topic)
                 messages = await stack.enter_async_context(manager)
-                for hl in topic.handlers:
-                    task = asyncio.create_task(hl(messages))
-                    self.tasks.add(task)
+                task = asyncio.create_task(self.parse_messages(messages))
+                self.tasks.add(task)
 
             # Subscribe to all topics
-            await client.subscribe(all_topics)
+            # Assume QoS 0 for now
+            all_topics = [(t, 0) for t in self.topics.keys()]
+            logging.info(f'Subscribing to MQTT {all_topics.count()} topics')
+            logging.debug(f'Topics: {all_topics}')
+            try:
+                await client.subscribe(all_topics)
+            except ValueError as err:
+                logging.error(f'MQTT Subscribe error: {err}')
 
             # Gather all tasks
+            logging.debug(f'Gathering tasks: {self.tasks}')
             await asyncio.gather(*self.tasks)
+
+    async def parse_messages(self, messages):
+        async for message in messages:
+            topic = message.topic
+            # Get handlers and iterate through
+            listener = self.topics[topic]
+            logging.debug(f'listeners: {listener}')
+            for func in listener.handlers:
+                await func(message.payload)
 
     async def cancel_tasks(self):
         for task in self.tasks:

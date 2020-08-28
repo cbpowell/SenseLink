@@ -46,43 +46,6 @@ sources:
             max_watts: 42  # Wattage used for 'on' state
             on_state_value: "on"
             off_state_value: "off"
-- hass:
-    url: "ws://your.HASS.API.URL.here"
-    auth_token: "your_token_here"
-    plugs:
-        # Scaled attribute (dimmer setting) example
-        - Kitchen_Lights:
-            alias: "Kitchen Lights"
-            entity_id: light.kitchen_main_lights
-            mac: 53:75:31:f6:4b:01
-            off_usage: 0
-            min_watts: 0
-            max_watts: 42
-            attribute_min: 0
-            attribute_max: 255
-            attribute: brightness
-            off_state_value: off
-
-        # Direct power usage reporting example
-        - Pump_Power_Meter:
-            alias: "Sump Pump Power Meter"
-            entity_id: sensor.sump_pump
-            mac: 53:75:31:f6:4b:02
-            # Or, if the power usage value is buried in the state update, something like:
-            # power_keypath: "state/usage/power"
-
-        # Example with an "off" vampire consumption
-        - Outdoor_Lights:
-            alias: "Outdoor Lights"
-            entity_id: light.outdoor_deck_lights
-            mac: 53:75:31:f6:4b:03
-            off_usage: 4  # Represents a vampire load when "off"
-            min_watts: 10
-            max_watts: 60
-            attribute_min: 0
-            attribute_max: 255
-            attribute: brightness
-            off_state_value: off
 - mqtt:
     host: "your.mqtt.broker"
     port: 1883       # Optional

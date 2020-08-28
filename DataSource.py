@@ -4,7 +4,7 @@ import logging
 import dpath.util
 from math import isclose
 from DataController import HASSController
-from DataController import MQTTController, MQTTTopic
+from DataController import MQTTController, MQTTListener
 
 
 def safekey(d, keypath, default=None):
@@ -62,9 +62,13 @@ class DataSource:
 
     def get_current(self):
         # Determine current, assume 120V
-        voltage = 120.0
+        voltage = self.get_voltage()
         current = self.get_power() / voltage
         return current
+
+    def get_voltage(self):
+        # Return preset voltage
+        return self.voltage
 
     def add_controller(self, controller):
         # Provided to allow override
@@ -221,6 +225,10 @@ class HASSSource(DataSource):
 class MQTTSource(DataSource):
     # Primary output property
     power = 0.0
+    # Store most recent MQTT values for topics
+    power_value = None
+    state_value = None
+    attribute_value = None
 
     def add_controller(self, controller):
         # Add self to passed-in MQTT Data Controller
@@ -254,13 +262,21 @@ class MQTTSource(DataSource):
 
             self.attribute_delta = self.attribute_max - self.attribute_min
 
-    def update_power(self, value):
-        self.power = value
+    async def update_power(self, value):
+        logging.debug(f'Power update for {self.identifier}: {value}')
+        self.power_value = value
 
-    def update_state(self, value):
-        self.state = value
+    async def update_state(self, value):
+        logging.debug(f'State update for {self.identifier}: {value}')
+        self.state_value = value
 
-    def handlers(self):
-        power_handler = MQTTTopic(self.power_topic, self.update_power)
-        state_handler = MQTTTopic(self.state_topic, self.update_state)
+    async def update_attribute(self, value):
+        logging.debug(f'Attribute update for {self.identifier}: {value}')
+        self.attribute_value = value
+
+    def listeners(self) -> [MQTTListener]:
+        # Return MQTTListener objects (topic and function)
+        logging.info(f'Generating listeners for {self.identifier}')
+        power_handler = MQTTListener(self.power_topic, [self.update_power])
+        state_handler = MQTTListener(self.state_topic, [self.update_state])
         return [power_handler, state_handler]
