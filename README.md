@@ -9,8 +9,11 @@ SenseLink is a tool that emulates the energy monitoring functionality of [TP-Lin
 SenseLink can emulate multiple plugs at the same time, and can report:
 1. Static/unchanging power usage
 2. Dynamic power usage based on other parameters through API integrations (e.g. a dimmer brightness value)
+3. Aggregate usage of any number of other plugs (static or dynamic)
 
 At the moment, dynamic power plugs can source data from the [Home Assistant](https://www.home-assistant.io) (Websockets API) and MQTT. Plus, other integrations should be relatively easy to implement!
+
+Aggregate "plugs" sum the power usage data from the specified sub-elements, and report usage just as dynamically.
 
 While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-frequently-asked-questions/7211) use the data from smart plugs for device detection algorithm training, you should be a good citizen and try only provide accurate data! Not to mention, incorrectly reporting your own data hurts your own monitoring as well!
 
@@ -24,6 +27,7 @@ The YAML configuration file should start with a top level `sources` key, which d
 - `hass`: Home Assistant, via the Websockets API
 - `mqtt`: MQTT, via a MQTT broker
 - `static`: Plugs with unchanging power values
+- `aggregate`: Summed values of other plugs, for example for a whole room - useful for staying under the Sense limit of ~20 plugs!
 
 See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
 
@@ -55,6 +59,22 @@ More "advanced" plugs using smarthome/IoT integrations will require more details
 2. [Home Assistant plugs](https://github.com/cbpowell/SenseLink/wiki/Home-Assistant-Plugs)
 3. [MQTT plugs](https://github.com/cbpowell/SenseLink/wiki/MQTT-Plugs)
 
+## Aggregate Plug Definition
+Aggregate plugs can be used to __sum the power usage__ of any number of other defined plugs (inside SenseLink). For example: if you have Caseta dimmers on multiple light switches in your Kitchen, you can define individual HASS plugs for each switch, and then specify a "Kitchen" aggregate plug comprised of all those individual HASS plugs. The Aggregate plug will report the sum power of the individual plugs, and the individual plugs will __not__ be reported to Sense independently.
+
+Each Aggregate plug requires the following definition (similar to the Basic plug, but without the `max_watts` key):
+```yaml
+sources:
+... # other plugs defined here!
+- aggregate:
+  - Kitchen_Aggregate:
+      mac: 50:c7:bf:f6:4d:01
+      alias: "Kitchen Lights"
+      elements:
+        - Kitchen_Overhead
+        - Kitchen_LEDs
+        - Kitchen_Spot
+```
 
 # Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
