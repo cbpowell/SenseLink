@@ -67,14 +67,16 @@ Each Aggregate plug requires the following definition (similar to the Basic plug
 sources:
 ... # other plugs defined here!
 - aggregate:
-  - Kitchen_Aggregate:
-      mac: 50:c7:bf:f6:4d:01
-      alias: "Kitchen Lights"
-      elements:
-        - Kitchen_Overhead
-        - Kitchen_LEDs
-        - Kitchen_Spot
+    plugs:
+    - Kitchen_Aggregate:
+        mac: 50:c7:bf:f6:4d:01
+        alias: "Kitchen Lights"
+        elements:
+          - Kitchen_Overhead
+          - Kitchen_LEDs
+          - Kitchen_Spot
 ```
+⚠️ Note: SenseLink does not currently prevent you from adding a plug as an element to more than one Aggregate plug. Doing so will over-report usage!
 
 # Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
