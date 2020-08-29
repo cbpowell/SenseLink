@@ -67,13 +67,14 @@ Each Aggregate plug requires the following definition (similar to the Basic plug
 sources:
 ... # other plugs defined here!
 - aggregate:
-  - Kitchen_Aggregate:
-      mac: 50:c7:bf:f6:4d:01
-      alias: "Kitchen Lights"
-      elements:
-        - Kitchen_Overhead
-        - Kitchen_LEDs
-        - Kitchen_Spot
+    plugs:
+    - Kitchen_Aggregate:
+        mac: 50:c7:bf:f6:4d:01
+        alias: "Kitchen Lights"
+        elements:
+          - Kitchen_Overhead
+          - Kitchen_LEDs
+          - Kitchen_Spot
 ```
 
 # Usage
