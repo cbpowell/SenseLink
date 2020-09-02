@@ -34,12 +34,11 @@ See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master
 ## Basic Plug Definition
 Each plug definition needs, at the minimum, the following parameters:
 - `alias`: The plug name - this is the name you'd see if this was a real plug configured in the TP-Link Kasa app
-- `max_watts`: The maximum wattage to report, or in the case of a `static` plug the (unchanging) wattage to report
-- `mac`: A **unique** MAC address for the emulated plug. This is how Sense differentiates plugs
+- `mac`: A **unique** MAC address for the emulated plug. This is how Sense differentiates plugs!
 
 If a `mac` value is not supplied, SenseLink will generate one at runtime - but this is almost certainly **not what you want**. With a random MAC address, a Sense will detect the SenseLink instances as "new" plug each time SenseLink is started!
 
-You can use the `PlugInstance` module to generate a random MAC address (with the TP-Link vendor code) if you don't want to just make one up. When in the project folder, use: `python3 -m PlugInstance` 
+You can use the `PlugInstance` module to generate a random MAC address if you don't want to just make one up. When in the project folder, use: `python3 -m PlugInstance` 
 
 Each real TP-Link plug also supplies a unique `device_id` value, however based on my testing Sense doesn't care about this value. If not provided in your configuration, SenseLink will generate a random one at runtime for each plug. Sense could change this in the future, so it is probably a good idea to generate and define a static `device_id` value in your configuration. The `PlugInstances` module will provide one if run as described above.
 
