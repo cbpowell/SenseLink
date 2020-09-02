@@ -136,6 +136,10 @@ class SenseLink:
                 elements = []
                 for plug in self._instances.values():
                     if plug.identifier in element_ids:
+                        if plug.in_aggregate:
+                            logging.warning(f"""Configuration adds plug {plug.identifier} to more than one Aggregate"""
+                                            f""" plug. Usage in Aggregate {inst.identifier} will be ignored.""")
+                            continue
                         # We want this plug
                         elements.append(plug)
                         plug.in_aggregate = True
