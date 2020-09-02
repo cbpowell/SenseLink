@@ -113,8 +113,9 @@ class SenseLink:
                 # Only one aggregate key allowed
                 if self.has_aggregate:
                     # Already defined, ignore this one
-                    logging.warning(f"Multiple 'aggregate' groups defined - only one group is allowed. Ignoring this \
-                    and all subsequent!")
+                    logging.warning(
+                        f"""Multiple 'aggregate' groups defined - only one group is allowed. Ignoring this"""
+                        """and all subsequent!""")
                     continue
                 self.has_aggregate = True
                 aggregate = source[AGG_KEY]
