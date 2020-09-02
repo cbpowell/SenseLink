@@ -158,7 +158,7 @@ class HASSSource(DataSource):
         # Figure out attribute path
         if self.power_keypath is not None:
             # Get value at power keypath as attribute
-            attribute_path = self.power_keypath
+            attribute_path = root_path + self.power_keypath
         elif self.attribute is not None:
             # Get (single key) attribute
             attribute_path = root_path + 'attributes/' + self.attribute
