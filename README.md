@@ -75,7 +75,7 @@ sources:
           - Kitchen_LEDs
           - Kitchen_Spot
 ```
-⚠️ Note: SenseLink does not currently prevent you from adding a plug as an element to more than one Aggregate plug. Doing so will over-report usage!
+Note: SenseLink will prevent you from listing the same plug in more than one Aggregate plug, to prevent double-reporting.
 
 # Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
