@@ -224,8 +224,8 @@ class SenseLink:
 
             # Appears to not be JSON
             except ValueError:
-                logging.debug("Did not receive valid json")
-                return True
+                logging.debug("Did not receive valid JSON message, ignoring")
+                continue
 
 
 def main():
