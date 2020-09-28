@@ -298,6 +298,10 @@ class MQTTSource(DataSource):
         logging.info(f'Update timeout reached for {self.identifier}, setting to off_usage')
         logging.debug(f'Power: {self.power}')
 
+    def get_power(self):
+        # Return internal value
+        return self.power
+
     def update_power(self, value, timeout=True):
         try:
             fval = float(value)
