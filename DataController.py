@@ -164,8 +164,9 @@ class MQTTController:
             try:
                 await self.listen()
             except MqttError as error:
-                logging.error(f'Disconnected from MQTT broker, reconnecting in {reconnect_interval}... ({error}')
+                logging.error(f'Disconnected from MQTT broker with error: {error}')
             finally:
+                logging.debug(f'MQTT client disconnected/ended, reconnecting in {reconnect_interval}...')
                 await asyncio.sleep(reconnect_interval)
 
     async def listen(self):

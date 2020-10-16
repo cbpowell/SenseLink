@@ -293,10 +293,9 @@ class MQTTSource(DataSource):
         # Sleep for specified time (seconds)
         await asyncio.sleep(timeout_value)
         # If we get here, set to off_usage
+        logging.info(f'Update timeout reached for {self.identifier}, setting to off_usage')
         self.update_power(self.off_usage, timeout=False)
         self.state = False
-        logging.info(f'Update timeout reached for {self.identifier}, setting to off_usage')
-        logging.debug(f'Power: {self.power}')
 
     def get_power(self):
         # Return internal value
@@ -312,7 +311,9 @@ class MQTTSource(DataSource):
         # Reset previous timer
         if self.timeout_duration is not None and timeout:
             if self.timer is not None:
+                logging.debug(f'Cancelling prior MQTT timeout timer')
                 self.timer.cancel()
+            logging.debug(f'Created MQTT timer with duration {self.timeout_duration}')
             self.timer = asyncio.create_task(self.timeout(self.timeout_duration))
 
         if not isclose(fval, self.power):
@@ -334,6 +335,7 @@ class MQTTSource(DataSource):
             # Device is off
             self.state = False
             self.update_power(self.off_usage)
+            logging.debug(f'State set to OFF for {self.identifier}')
         elif value == self.on_state_value:
             # Device is on, but action depends on if a attribute topic is also defined,
             # to distinguish between a state+attribute plug or a state-only plug
@@ -341,10 +343,12 @@ class MQTTSource(DataSource):
                 # Update state only, do not assume wattage because it may be updated separately
                 # Wattage will be whatever the most recent wattage value was!
                 self.state = True
+                logging.debug(f'State set to ON for {self.identifier}, wattage to be set by attribute')
             else:
                 # Update state and set to max_wattage for a binary type plug
                 self.state = True
                 self.update_power(self.max_watts)
+                logging.debug(f'State set to ON for {self.identifier}, using max_watts for power value')
         else:
             # State does not match on or off values, so check if it's a float
             try:
