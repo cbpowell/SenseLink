@@ -129,10 +129,20 @@ class MQTTListener:
         self.handlers.extend(hndls)
 
 
+async def cancel_tasks(tasks):
+    for task in tasks:
+        if task.done():
+            continue
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
 class MQTTController:
     client = None
     topics: Dict[str, MQTTListener] = None
-    tasks = set()
 
     def __init__(self, host, port=1883, username=None, password=None):
         self.host = host
@@ -161,7 +171,8 @@ class MQTTController:
     async def listen(self):
         async with AsyncExitStack() as stack:
             # Track tasks
-            stack.push_async_callback(self.cancel_tasks)
+            tasks = set()
+            stack.push_async_callback(cancel_tasks, tasks)
 
             # Connect to the MQTT broker
             client = Client(self.host, self.port, username=self.username, password=self.password)
@@ -192,7 +203,7 @@ class MQTTController:
                 manager = client.filtered_messages(topic)
                 messages = await stack.enter_async_context(manager)
                 task = asyncio.create_task(self.parse_messages(messages))
-                self.tasks.add(task)
+                tasks.add(task)
 
             # Subscribe to all topics
             # Assume QoS 0 for now
@@ -205,7 +216,7 @@ class MQTTController:
                 logging.error(f'MQTT Subscribe error: {err}')
 
             # Gather all tasks
-            await asyncio.gather(*self.tasks)
+            await asyncio.gather(*tasks)
             logging.info(f'Listening for MQTT updates')
 
     async def parse_messages(self, messages):
@@ -216,16 +227,6 @@ class MQTTController:
             for func in listener.handlers:
                 # Decode to UTF-8
                 await func(message.payload.decode())
-
-    async def cancel_tasks(self):
-        for task in self.tasks:
-            if task.done():
-                continue
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
 
 
 if __name__ == "__main__":
