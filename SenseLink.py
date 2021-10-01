@@ -189,7 +189,7 @@ class SenseLink:
                         logging.debug("Ignoring non-empty/non-Sense UDP request")
                         continue
 
-                    logging.debug("Broadcast received from: %s: %s", request_addr, json_data)
+                    logging.debug(f"Broadcast received from {request_addr}: {json_data}")
 
                     if self._remote_ep is None:
                         self._remote_ep = await open_remote_endpoint(request_addr, self.port)
@@ -220,7 +220,7 @@ class SenseLink:
                             # Do not send response, but log for debugging
                             logging.debug(f"SENSE_RESPONSE disabled, response content: {response}")
                 else:
-                    logging.warning(f"Unexpected/unhandled message: {json_data}")
+                    logging.debug(f"Ignoring non-emeter JSON from {request_addr}: {json_data}")
 
             # Appears to not be JSON
             except ValueError:
