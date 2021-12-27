@@ -1,6 +1,5 @@
 # Copyright 2020, Charles Powell
 
-import asyncio
 import json
 import time
 import yaml

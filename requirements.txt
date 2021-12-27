@@ -1,6 +1,6 @@
-asyncio-mqtt==0.7.0
-dpath==2.0.1
-paho-mqtt==1.5.0
-PyYAML==5.4
-six==1.15.0
-websockets==9.1
+asyncio-mqtt==0.11.0
+dpath==2.0.5
+paho-mqtt==1.6.1
+PyYAML==6.0
+six==1.16.0
+websockets==10.1
