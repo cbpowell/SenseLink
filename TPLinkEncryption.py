@@ -22,6 +22,7 @@
 
 from struct import pack
 
+
 def _generate_bytes(unencrypted):
     key = 171
     for unencryptedbyte in unencrypted:
@@ -32,6 +33,7 @@ def _generate_bytes(unencrypted):
 def encrypt(string):
     unencrypted = string.encode()
     return pack(">I", len(unencrypted)) + bytes(_generate_bytes(unencrypted))
+
 
 def decrypt(string):
     key = 171
