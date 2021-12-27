@@ -126,12 +126,12 @@ class PlugInstance:
                     "sw_ver": "1.2.5 Build 171206 Rel.085954",
                     "hw_ver": "1.0",
                     "type": "IOT.SMARTPLUGSWITCH",
-                    "model": "SenseLink",
+                    "model": "HS110(US)", # Previously used 'SenseLink', but first-run issues were found, see https://github.com/cbpowell/SenseLink/issues/17
                     "mac": self.mac.upper(),
-                    "deviceId": self.device_id.upper(),
+                    "deviceId": self.mac.upper(),
                     "alias": self.alias,
                     "relay_state": 1,  # Assuming it's on, not sure it matters
-                    "on_time": time() - self.start_time,
+                    "updating": 0
                 }
             }
         }
