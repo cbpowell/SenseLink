@@ -1,7 +1,7 @@
 # Copyright 2020, Charles Powell
 
 import json
-import time
+from time import time
 import yaml
 import argparse
 from DataSource import *
