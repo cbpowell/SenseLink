@@ -82,7 +82,7 @@ First of all, note that whatever **computer or device running SenseLink needs to
 
 ## Command Line
 SenseLink can be started directly via the command line:
-`python3 ./SenseLink.py -c "/path/to/your/config.yml`
+`python3 ./SenseLink.py -c "/path/to/your/config.yml"`
 
 The `-l` option can also be used to set the logging level (`-l "DEBUG"`). SenseLink needs to be able to listen on UDP port `9999`, so be sure you allow incoming on any firewalls.
 
