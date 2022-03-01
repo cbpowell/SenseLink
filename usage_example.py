@@ -9,7 +9,7 @@ handler = logging.StreamHandler(sys.stdout)
 
 def main():
     # Get config
-    config = open('config_private.yml', 'r')
+    config = open('your_config_file.yml', 'r')
     # Create controller, with config
     controller = SenseLink(config)
     # Start and run indefinitely
