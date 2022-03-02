@@ -21,7 +21,7 @@ While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-freque
 
 
 # Configuration
-Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for a an example setup.
+Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for an example setup.
 
 The YAML configuration file should start with a top level `sources` key, which defines an array of sources for power data. Each source then has a `plugs` key to define an array of individual emulated plugs, plugs other configuration details as needed for that particular source. The current supported sources types are:
 - `hass`: Home Assistant, via the Websockets API
