@@ -41,6 +41,7 @@ class SenseLink:
     def __init__(self, config, port=9999):
         self.config = config
         self.port = port
+        self.target = None
         self.server_task = None
         self._instances = {}
         self._agg_instances = {}
@@ -49,6 +50,7 @@ class SenseLink:
         config = yaml.load(self.config, Loader=yaml.FullLoader)
         logging.debug(f"Configuration loaded: {config}")
         sources = config.get('sources')
+        self.target = config.get('target') or None
         aggregate = None
 
         for source in sources:
@@ -175,7 +177,13 @@ class SenseLink:
 
         while True:
             data, addr = await self._local_ep.receive()
-            request_addr = addr[0]
+            if self.target is not None:
+                logging.info(f"Response target is defined, will send all responses to {self.target}")
+                request_addr = self.target
+            else:
+                request_addr = self.target or addr[0]
+
+            # Decrypt request data
             decrypted_data = decrypt(data)
 
             try:
