@@ -104,8 +104,8 @@ class PlugInstance:
 
     def generate_response(self):
         # Grab latest values from source
-        power = self.data_source.get_power()
-        current = self.data_source.get_current()
+        power = self.data_source.power
+        current = self.data_source.current
         voltage = self.data_source.voltage
 
         # Response dict

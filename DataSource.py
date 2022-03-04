@@ -29,7 +29,7 @@ def get_float_at_path(message, path, default_value=None):
 
 
 class DataSource:
-    voltage = 120
+    _voltage = 120
     instances = []
     state = True  # Assume on
     off_usage = 0.0
@@ -51,7 +51,8 @@ class DataSource:
 
             self.delta_watts = self.max_watts - self.min_watts
 
-    def get_power(self):
+    @property
+    def power(self):
         # Build response
         # Determine wattage
         if self.state:
@@ -62,15 +63,21 @@ class DataSource:
             power = self.off_usage
         return power
 
-    def get_current(self):
+    @property
+    def current(self):
         # Determine current, assume 120V
-        voltage = self.get_voltage()
-        current = self.get_power() / voltage
+        voltage = self.voltage
+        current = self.power / voltage
         return current
 
-    def get_voltage(self):
+    @property
+    def voltage(self):
         # Return preset voltage
-        return self.voltage
+        return self._voltage
+
+    @voltage.setter
+    def voltage(self, new_voltage):
+        self._voltage = new_voltage
 
     def add_controller(self, controller):
         # Provided to allow override
@@ -81,8 +88,6 @@ class DataSource:
 
 
 class AggregateSource(DataSource):
-    # Primary output property
-    power = 0.0
 
     def __init__(self, identifier, details, controller):
         super().__init__(identifier, details, controller)
@@ -92,7 +97,8 @@ class AggregateSource(DataSource):
         if details is not None:
             self.element_ids = details.get('elements') or []
 
-    def get_power(self):
+    @property
+    def power(self):
         # Get power values from individual elements, and sum
         plug_powers = list(map(lambda plug: plug.power, self.elements))
         sum_power = sum(plug_powers)
@@ -101,7 +107,7 @@ class AggregateSource(DataSource):
 
 class HASSSource(DataSource):
     # Primary output property
-    power = 0.0
+    _power = 0.0
 
     def add_controller(self, controller):
         # Add self to passed-in Websocket controller
@@ -242,14 +248,18 @@ class HASSSource(DataSource):
         self.power = parsed_power
         logging.info(f"Updated wattage for {self.identifier}: {parsed_power}")
 
-    def get_power(self):
-        # Return internal value
-        return self.power
+    @property
+    def power(self):
+        return self._power
+
+    @power.setter
+    def power(self, new_power):
+        self._power = new_power
 
 
 class MQTTSource(DataSource):
     # Primary output property
-    power = 0.0
+    _power = 0.0
     timer = None
 
     def add_controller(self, controller):
@@ -298,9 +308,9 @@ class MQTTSource(DataSource):
         self.update_power(self.off_usage, timeout=False)
         self.state = False
 
-    def get_power(self):
-        # Return internal value
-        return self.power
+    @property
+    def power(self):
+        return self._power
 
     def update_power(self, value, timeout=True):
         try:
@@ -318,7 +328,7 @@ class MQTTSource(DataSource):
             self.timer = asyncio.create_task(self.timeout(self.timeout_duration))
 
         if not isclose(fval, self.power):
-            self.power = fval
+            self._power = fval
             # Assume off if reported power usage is close to off_usage
             if isclose(self.power, self.off_usage):
                 self.state = False
@@ -368,7 +378,7 @@ class MQTTSource(DataSource):
             attribute_value = float(value)
         except ValueError:
             logging.warning(f'Non-float value ("{value}") received for attribute update, unable to update!')
-            self.power = self.off_usage
+            self._power = self.off_usage
             self.state = False
             return
 
