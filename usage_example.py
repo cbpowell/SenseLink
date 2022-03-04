@@ -16,9 +16,19 @@ async def change_mutable_plug_power(plug):
         await asyncio.sleep(random.randrange(1, 4, 1))
 
 
+# Config example
+# sources:
+#   - mutable:
+#       plugs:
+#       - mutable1:
+#           alias: "Mutable 1"
+#           mac: 50:c7:bf:f6:4f:39 # used specifically below
+#           power: 15
+
+
 async def main():
     # Get config
-    config = open('your_config_file.yml', 'r')
+    config = open('config.yml', 'r')
     # Create controller, with config
     controller = SenseLink(config)
     # Create instances
