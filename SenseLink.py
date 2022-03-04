@@ -45,6 +45,7 @@ class SenseLink:
         self.server_task = None
         self._instances = {}
         self._agg_instances = {}
+        self.tasks = set()
 
     def create_instances(self):
         config = yaml.load(self.config, Loader=yaml.FullLoader)
@@ -77,16 +78,17 @@ class SenseLink:
                     logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
                 auth_token = hass['auth_token']
-                ds_controller = HASSController(url, auth_token)
+                hass_controller = HASSController(url, auth_token)
 
                 # Generate plug instances
                 plugs = hass[PLUGS_KEY]
                 logging.info("Generating HASS instances")
-                instances = PlugInstance.configure_plugs(plugs, HASSSource, ds_controller)
+                instances = PlugInstance.configure_plugs(plugs, HASSSource, hass_controller)
                 self.add_instances(instances)
 
                 # Start controller
-                ds_controller.connect()
+                hass_task = hass_controller.connect()
+                self.tasks.add(hass_task)
 
             # MQTT Plugs
             elif source_id.lower() == MQTT_KEY:
@@ -107,7 +109,8 @@ class SenseLink:
                 self.add_instances(instances)
 
                 # Start controller
-                mqtt_controller.connect()
+                mqtt_task = mqtt_controller.connect()
+                self.tasks.add(mqtt_task)
 
             # Aggregate-type Plugs
             elif source_id.lower() == AGG_KEY:
@@ -167,24 +170,31 @@ class SenseLink:
             logging.info(f"Plug {inst.identifier} power: {inst.power}")
 
     async def start(self):
-        self.create_instances()
-        await self._serve()
+        self.tasks.add(self.server_start())
+        await asyncio.gather(*self.tasks)
 
-    async def _serve(self):
+    async def server_start(self):
         server_start = time()
         logging.info("Starting UDP server")
         self._local_ep = await open_local_endpoint('0.0.0.0', self.port)
 
         while True:
-            data, addr = await self._local_ep.receive()
-            if self.target is not None:
-                logging.info(f"Response target is defined, will send all responses to {self.target}")
-                request_addr = self.target
-            else:
-                request_addr = self.target or addr[0]
+            try:
+                data, addr = await self._local_ep.receive()
+                if self.target is not None:
+                    logging.info(f"Response target is defined, will send all responses to {self.target}")
+                    request_addr = self.target
+                else:
+                    request_addr = self.target or addr[0]
 
-            # Decrypt request data
-            decrypted_data = decrypt(data)
+                # Decrypt request data
+                decrypted_data = decrypt(data)
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                logging.info(f'Shutdown requested')
+                return False
+            except Exception as error:
+                logging.error(f'Execution stopped with error: {error}')
+                return False
 
             try:
                 json_data = json.loads(decrypted_data)
@@ -235,7 +245,7 @@ class SenseLink:
                 continue
 
 
-def main():
+async def main():
     import os
 
     parser = argparse.ArgumentParser()
@@ -259,13 +269,16 @@ def main():
     if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE' and not args.quiet:
         logging.info("Will respond to Sense broadcasts")
         controller.should_respond = True
+    # Create instances
+    controller.create_instances()
 
     # Start and run indefinitely
     logging.info("Starting SenseLink controller")
-    loop = asyncio.get_event_loop()
-    tasks = asyncio.gather(*[controller.start()])
-    loop.run_until_complete(tasks)
+    await controller.start()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    finally:
+        logging.info("SenseLink stopped")

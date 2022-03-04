@@ -36,9 +36,9 @@ class HASSController:
         self.url = url
         self.auth_token = auth_token
 
-    def connect(self):
+    async def connect(self):
         # Create task
-        asyncio.create_task(self.client_handler())
+        await self.client_handler()
 
     async def client_handler(self):
         logging.info(f"Starting websocket client to URL: {self.url}")
@@ -57,7 +57,7 @@ class HASSController:
                         await asyncio.sleep(10)
                         asyncio.create_task(self.client_handler())
                         return False
-        except (websockets.exceptions.WebSocketException, gaierror) as err:
+        except (websockets.exceptions.WebSocketException, asyncio.exceptions.TimeoutError, gaierror) as err:
             logging.error(f"Unable to connect to server at {self.url} ({type(err)}:{err})")
             logging.info(f"Attempting to reconnect in 10...")
             await asyncio.sleep(10)
@@ -153,9 +153,9 @@ class MQTTController:
         self.data_sources = []
         self.topics = {}
 
-    def connect(self):
+    async def connect(self):
         # Create task
-        asyncio.create_task(self.client_handler())
+        await self.client_handler()
 
     async def client_handler(self):
         logging.info(f"Starting MQTT client to URL: {self.host}")
@@ -165,9 +165,13 @@ class MQTTController:
                 await self.listen()
             except MqttError as error:
                 logging.error(f'Disconnected from MQTT broker with error: {error}')
-            finally:
                 logging.debug(f'MQTT client disconnected/ended, reconnecting in {reconnect_interval}...')
                 await asyncio.sleep(reconnect_interval)
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                return False
+            except Exception as error:
+                logging.error(f'Stopping MQTT client with error: {error}')
+                return False
 
     async def listen(self):
         async with AsyncExitStack() as stack:
