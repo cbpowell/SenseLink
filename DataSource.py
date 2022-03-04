@@ -87,6 +87,23 @@ class DataSource:
             self.controller.data_sources.append(self)
 
 
+class MutableSource(DataSource):
+    _power = 0.0
+
+    def __init__(self, identifier, details, controller=None):
+        super().__init__(identifier, details, controller)
+        if details is not None:
+            self.power = details.get('power') or 0.0
+
+    @property
+    def power(self):
+        return self._power
+
+    @power.setter
+    def power(self, new_power):
+        self._power = new_power
+
+
 class AggregateSource(DataSource):
 
     def __init__(self, identifier, details, controller):

@@ -10,6 +10,7 @@ from TPLinkEncryption import *
 from aioudp import *
 
 STATIC_KEY = 'static'
+MUTABLE_KEY = 'mutable'
 HASS_KEY = 'hass'
 MQTT_KEY = 'mqtt'
 AGG_KEY = 'aggregate'
@@ -69,7 +70,16 @@ class SenseLink:
                 logging.info("Generating Static instances")
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self.add_instances(instances)
-
+            elif source_id.lower() == MUTABLE_KEY:
+                # Mutable value plugs
+                mutable = source[MUTABLE_KEY]
+                if mutable is None:
+                    logging.error(f"Configuration error for Source {source_id}")
+                # Generate plug instances
+                plugs = mutable[PLUGS_KEY]
+                logging.info("Generating Mutable instances")
+                instances = PlugInstance.configure_plugs(plugs, MutableSource)
+                self.add_instances(instances)
             # HomeAssistant Plugs, using Websockets datasource
             elif source_id.lower() == HASS_KEY:
                 # Configure this HASS Data source
@@ -164,6 +174,9 @@ class SenseLink:
 
         # Add to global instances
         self._instances = {**self._instances, **instances}
+
+    def plug_for_mac(self, mac):
+        return self._instances[mac]
 
     def print_instance_wattages(self):
         for inst in self._instances:
