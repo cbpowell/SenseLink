@@ -38,11 +38,13 @@ async def main():
     mutable_plug = controller.plug_for_mac("50:c7:bf:f6:4f:39")
     plug_update = change_mutable_plug_power(mutable_plug)
 
-    # Get SenseLink tasks to add these
+    # Get base SenseLink tasks (for other controllers in the config, perhaps), and
+    # add our new top level plug task, as well as the main SenseLink controller itself
     tasks = controller.tasks
     tasks.add(plug_update)
     tasks.add(controller.server_start())
 
+    # Start all the tasks
     logging.info("Starting SenseLink controller")
     await asyncio.gather(*tasks)
 
