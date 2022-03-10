@@ -311,5 +311,5 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    finally:
-        logging.info("SenseLink stopped")
+    except KeyboardInterrupt:
+        logging.info("Interrupt received, stopping SenseLink")
