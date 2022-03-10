@@ -8,7 +8,6 @@ import argparse
 from DataSource import *
 from PlugInstance import *
 from TPLinkEncryption import *
-from aioudp import *
 
 STATIC_KEY = 'static'
 MUTABLE_KEY = 'mutable'
@@ -34,9 +33,75 @@ def keys_exist(element, *keys):
     return True
 
 
+class SenseLinkProtocol(asyncio.DatagramProtocol):
+    transport = None
+    target = None
+
+    def __init__(self, instances, finished):
+        self._instances = instances
+        self.should_respond = True
+        self.finished = finished
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def connection_lost(self, exc):
+        pass
+
+    def datagram_received(self, data, addr):
+        # Decrypt request data
+        decrypted_data = decrypt(data)
+        # Determine target
+        request_addr = self.target or addr[0]
+
+        try:
+            # Get JSON data
+            json_data = json.loads(decrypted_data)
+
+            # Sense requests the emeter and system parameters
+            if keys_exist(json_data, "emeter", "get_realtime") and keys_exist(json_data, "system", "get_sysinfo"):
+                # Check for non-empty values, to prevent echo storms
+                if bool(safekey(json_data, 'emeter/get_realtime')):
+                    # This is a self-echo, common with Docker without --net=Host!
+                    logging.debug("Ignoring non-empty/non-Sense UDP request")
+                    return
+
+                logging.debug(f"Broadcast received from {request_addr}: {json_data}")
+
+                # Build and send responses
+                for inst in self._instances.values():
+                    # Check if this instance is in an aggregate
+                    if inst.in_aggregate:
+                        # Do not send individual response for this plug
+                        logging.debug(f"Plug '{inst.identifier}' in aggregate, not sending discrete response")
+                        continue
+
+                    # Build response
+                    response = inst.generate_response()
+                    json_str = json.dumps(response, separators=(',', ':'))
+                    encrypted_str = encrypt(json_str)
+                    # Strip leading 4 bytes for...some reason
+                    trun_str = encrypted_str[4:]
+
+                    # Allow disabling response
+                    if self.should_respond:
+                        # Send response
+                        logging.debug(f"Sending response: {response}")
+                        self.transport.sendto(trun_str, addr)
+                    else:
+                        # Do not send response, but log for debugging
+                        logging.debug(f"SENSE_RESPONSE disabled, response content would be: {response}")
+            else:
+                logging.debug(f"Ignoring non-emeter JSON from {request_addr}: {json_data}")
+
+        # Appears to not be JSON
+        except ValueError:
+            logging.debug("Did not receive valid JSON message, ignoring")
+
+
 class SenseLink:
-    _remote_ep = None
-    _local_ep = None
+    transport = None
+    protocol = None
     should_respond = True
     has_aggregate = False
 
@@ -188,75 +253,27 @@ class SenseLink:
         await asyncio.gather(*self.tasks)
 
     async def server_start(self):
-        server_start = time()
+        loop = asyncio.get_running_loop()
+        finished = loop.create_future()
+        protocol = SenseLinkProtocol(self._instances, finished)
+        protocol.should_respond = self.should_respond
+        protocol.target = self.target
+
         logging.info("Starting UDP server")
-        self._local_ep = await open_local_endpoint('0.0.0.0', self.port)
+        try:
+            self.transport, self.protocol = await loop.create_datagram_endpoint(
+                lambda: protocol,
+                local_addr=('0.0.0.0', self.port))
+        except Exception as err:
+            logging.error(f'Error creating endpoint {err}')
 
-        while True:
-            try:
-                data, addr = await self._local_ep.receive()
-                if self.target is not None:
-                    logging.info(f"Response target is defined, will send all responses to {self.target}")
-                    request_addr = self.target
-                else:
-                    request_addr = self.target or addr[0]
-
-                # Decrypt request data
-                decrypted_data = decrypt(data)
-            except (KeyboardInterrupt, asyncio.CancelledError):
-                logging.info(f'Shutdown requested')
-                return False
-            except Exception as error:
-                logging.error(f'Execution stopped with error: {error}')
-                return False
-
-            try:
-                json_data = json.loads(decrypted_data)
-                # Sense requests the emeter and system parameters
-                if keys_exist(json_data, "emeter", "get_realtime") and keys_exist(json_data, "system", "get_sysinfo"):
-                    # Check for non-empty values, to prevent echo storms
-                    if bool(safekey(json_data, 'emeter/get_realtime')):
-                        # This is a self-echo, common with Docker without --net=Host!
-                        logging.debug("Ignoring non-empty/non-Sense UDP request")
-                        continue
-
-                    logging.debug(f"Broadcast received from {request_addr}: {json_data}")
-
-                    if self._remote_ep is None:
-                        self._remote_ep = await open_remote_endpoint(request_addr, self.port)
-
-                    # Build and send responses
-                    for inst in self._instances.values():
-                        # Check if this instance is in an aggregate
-                        if inst.in_aggregate:
-                            # Do not send individual response for this plug
-                            logging.debug(f"Plug '{inst.identifier}' in aggregate, not sending discrete response")
-                            continue
-
-                        if inst.start_time is None:
-                            inst.start_time = server_start
-                        # Build response
-                        response = inst.generate_response()
-                        json_str = json.dumps(response, separators=(',', ':'))
-                        encrypted_str = encrypt(json_str)
-                        # Strip leading 4 bytes for...some reason
-                        trun_str = encrypted_str[4:]
-
-                        # Allow disabling response
-                        if self.should_respond:
-                            # Send response
-                            logging.debug(f"Sending response: {response}")
-                            self._remote_ep.send(trun_str)
-                        else:
-                            # Do not send response, but log for debugging
-                            logging.debug(f"SENSE_RESPONSE disabled, response content: {response}")
-                else:
-                    logging.debug(f"Ignoring non-emeter JSON from {request_addr}: {json_data}")
-
-            # Appears to not be JSON
-            except ValueError:
-                logging.debug("Did not receive valid JSON message, ignoring")
-                continue
+        try:
+            await finished
+        except KeyboardInterrupt:
+            logging.info('Interrupt received, stopping server')
+            finished.set_result(True)
+        finally:
+            self.transport.close()
 
 
 async def main():
