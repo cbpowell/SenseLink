@@ -94,7 +94,7 @@ A Docker image is [available](https://hub.docker.com/repository/docker/theta142/
 An example `docker-compose` file is also provided in the repository.
 
 ## In other projects
-See the usage in the [`usage_example.py`](https://github.com/cbpowell/SenseLink/blob/master/usage_example.py) file.
+See the usage in the [`module_usage_example.py`](https://github.com/cbpowell/SenseLink/blob/master/module_usage_example.py) file.
 
 # Todo
 - Add additional integrations!
