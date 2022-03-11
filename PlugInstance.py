@@ -40,6 +40,8 @@ class PlugInstance:
     start_time = None
     data_source = None
     in_aggregate = False  # Assume not in aggregate to start
+    response_ratio = 1.0
+    _response_counter = 0
 
     def __init__(self, identifier, alias=None, mac=None, device_id=None):
         self.identifier = identifier
@@ -77,9 +79,11 @@ class PlugInstance:
                 alias = details.get('alias')
                 mac = details.get('mac')
                 device_id = details.get('device_id')
+                ratio = details.get('response_ratio') or 1.0
 
                 # Create and configure instance
                 instance = cls(plug_id, alias, mac, device_id)
+                instance.response_ratio = ratio
 
                 # Generate data source with details, and assign
                 instance.data_source = data_source_class(plug_id, details, data_controller)
@@ -134,7 +138,17 @@ class PlugInstance:
                 }
             }
         }
+
+        # Increment counter
+        self._response_counter += 1
         return response
+
+    def should_respond(self):
+        if self._response_counter >= (1/self.response_ratio):
+            self._response_counter = 0
+            return True
+        else:
+            return False
 
 
 if __name__ == "__main__":

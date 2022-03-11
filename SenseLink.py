@@ -83,14 +83,18 @@ class SenseLinkProtocol(asyncio.DatagramProtocol):
                     # Strip leading 4 bytes for...some reason
                     trun_str = encrypted_str[4:]
 
-                    # Allow disabling response
-                    if self.should_respond:
+                    # Allow disabling response, and rate limiting
+                    plug_respond = inst.should_respond()
+                    if self.should_respond and plug_respond:
                         # Send response
-                        logging.debug(f"Sending response: {response}")
+                        logging.debug(f"Sending response for plug {inst.identifier}: {response}")
                         self.transport.sendto(trun_str, addr)
+                    elif not plug_respond:
+                        logging.debug(f'Plug {inst.identifier} response rate limited')
                     else:
                         # Do not send response, but log for debugging
-                        logging.debug(f"SENSE_RESPONSE disabled, response content would be: {response}")
+                        logging.debug(
+                            f"SENSE_RESPONSE disabled, plug {inst.identifier} response content would be: {response}")
             else:
                 logging.debug(f"Ignoring non-emeter JSON from {request_addr}: {json_data}")
 
