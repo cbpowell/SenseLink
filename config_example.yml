@@ -90,6 +90,7 @@ sources:
           mac: 53:75:31:f6:4c:01
           max_watts: 15
           alias: "NAS Server"
+          skip_rate: 3
       - Fan:
           mac: 53:75:31:f6:4c:02
           max_watts: 5

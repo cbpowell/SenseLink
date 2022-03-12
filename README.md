@@ -40,6 +40,15 @@ If a `mac` value is not supplied, SenseLink will generate one at runtime - but t
 
 You can use the `PlugInstance` module to generate a random MAC address if you don't want to just make one up. When in the project folder, use: `python3 -m PlugInstance` 
 
+### Optional Parameters
+#### Skip Rate
+A `skip_rate` key and value can be provided in the plug definition. This per-plug value defines how many incoming requests will be skipped before SenseLink will allow the plug to respond. A `skip_rate` of `0` is the inherent default, and means the plug will respond to every request. A `skip_rate` of `3` will cause three (3) requests to be skipped before a response is provided.
+
+While this is completely unverified, anecdotally it has been stated that the Sense plug limit is related to the available processing power to parse incoming replies. This feature *may* allow you to expand beyond this limit, by reducing the response rate for plugs with static or near-static power readings, and thereby reducing the response load on your Sense meter.
+
+Note that (obviously) the value reported by Sense will not change when responses are skipped, even if your data source value is updated. In my testing, a `skip_rate` of more than `5` or `6` will cause Sense to start reporting the plug as "N/A", and values higher than that will result in the plug appearing as "Off".
+
+#### Device ID
 Each real TP-Link plug also supplies a unique `device_id` value, however based on my testing Sense doesn't care about this value. If not provided in your configuration, SenseLink will generate a random one at runtime for each plug. Sense could change this in the future, so it is probably a good idea to generate and define a static `device_id` value in your configuration. The `PlugInstances` module will provide one if run as described above.
 
 A minimum configuration file and static-type plug definition will look like the following:
