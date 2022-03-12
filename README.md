@@ -28,10 +28,12 @@ The YAML configuration file should start with a top level `sources` key, which d
 - `hass`: Home Assistant, via the Websockets API
 - `mqtt`: MQTT, via a MQTT broker
 - `aggregate`: Summed values of other plugs, for example for a whole room - useful for staying under the Sense limit of ~20 plugs!
+- `mutable`: Plugs designed to have their power values changed by other areas of the code/program. Primarily only useful when using SenseLink as a module in other code. See the [`module_usage_example.py`](https://github.com/cbpowell/SenseLink/blob/master/module_usage_example.py) file.
 
 See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for examples of each, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
 
-## Basic Plug Definition
+## Plug Definition
+### Required Parameters
 Each plug definition needs, at the minimum, the following parameters:
 - `alias`: The plug name - this is the name you'd see if this was a real plug configured in the TP-Link Kasa app
 - `mac`: A **unique** MAC address for the emulated plug. This is how Sense differentiates plugs!
@@ -51,6 +53,7 @@ Note that (obviously) the value reported by Sense will not change when responses
 #### Device ID
 Each real TP-Link plug also supplies a unique `device_id` value, however based on my testing Sense doesn't care about this value. If not provided in your configuration, SenseLink will generate a random one at runtime for each plug. Sense could change this in the future, so it is probably a good idea to generate and define a static `device_id` value in your configuration. The `PlugInstances` module will provide one if run as described above.
 
+### Minimum Configuration
 A minimum configuration file and static-type plug definition will look like the following:
 ```yaml
 sources:
@@ -68,6 +71,7 @@ More "advanced" plugs using smarthome/IoT integrations will require more details
 1. [Static plugs](https://github.com/cbpowell/SenseLink/wiki/Static-Plugs)
 2. [Home Assistant plugs](https://github.com/cbpowell/SenseLink/wiki/Home-Assistant-Plugs)
 3. [MQTT plugs](https://github.com/cbpowell/SenseLink/wiki/MQTT-Plugs)
+4. [Mutable plugs](https://github.com/cbpowell/SenseLink/wiki/Mutable-Plugs) (Mutable plugs are dynamic only in that they may be updated directly via Python code in module usage)
 
 ## Aggregate Plug Definition
 Aggregate plugs can be used to __sum the power usage__ of any number of other defined plugs (inside SenseLink). For example: if you have Caseta dimmers on multiple light switches in your Kitchen, you can define individual HASS plugs for each switch, and then specify a "Kitchen" aggregate plug comprised of all those individual HASS plugs. The Aggregate plug will report the sum power of the individual plugs, and the individual plugs will __not__ be reported to Sense independently.

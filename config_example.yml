@@ -96,6 +96,14 @@ sources:
           max_watts: 5
           alias: "Ceiling Fan"
 
+# Mutable
+  - mutable:
+      plugs:
+      - mutable1:
+          alias: "Mutable 1"
+          mac: 53:75:31:f6:5c:02
+          power: 12
+
 # Aggregate
   - aggregate:
       plugs:

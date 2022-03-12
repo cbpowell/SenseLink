@@ -140,8 +140,9 @@ class SenseLink:
                 logging.info("Generating Static instances")
                 instances = PlugInstance.configure_plugs(plugs, DataSource)
                 self.add_instances(instances)
+
+            # Mutable value plugs
             elif source_id.lower() == MUTABLE_KEY:
-                # Mutable value plugs
                 mutable = source[MUTABLE_KEY]
                 if mutable is None:
                     logging.error(f"Configuration error for Source {source_id}")
@@ -150,6 +151,7 @@ class SenseLink:
                 logging.info("Generating Mutable instances")
                 instances = PlugInstance.configure_plugs(plugs, MutableSource)
                 self.add_instances(instances)
+
             # HomeAssistant Plugs, using Websockets datasource
             elif source_id.lower() == HASS_KEY:
                 # Configure this HASS Data source
