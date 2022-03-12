@@ -21,15 +21,15 @@ While Sense [doesn't currently](https://community.sense.com/t/smart-plugs-freque
 
 
 # Configuration
-Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for an example setup.
+Configuration is defined through a YAML file, that should be passed in when creating an instance of the `SenseLink` class. See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) file for examples of how to write configurations (note the example config itself is not a valid demo config!).
 
 The YAML configuration file should start with a top level `sources` key, which defines an array of sources for power data. Each source then has a `plugs` key to define an array of individual emulated plugs, plugs other configuration details as needed for that particular source. The current supported sources types are:
+- `static`: Plugs with unchanging power values
 - `hass`: Home Assistant, via the Websockets API
 - `mqtt`: MQTT, via a MQTT broker
-- `static`: Plugs with unchanging power values
 - `aggregate`: Summed values of other plugs, for example for a whole room - useful for staying under the Sense limit of ~20 plugs!
 
-See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for a full example, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
+See the [`config_example.yml`](https://github.com/cbpowell/SenseLink/blob/master/config_example.yml) for examples of each, and [the wiki](https://github.com/cbpowell/SenseLink/wiki) for configuration details!
 
 ## Basic Plug Definition
 Each plug definition needs, at the minimum, the following parameters:
@@ -42,13 +42,15 @@ You can use the `PlugInstance` module to generate a random MAC address if you do
 
 Each real TP-Link plug also supplies a unique `device_id` value, however based on my testing Sense doesn't care about this value. If not provided in your configuration, SenseLink will generate a random one at runtime for each plug. Sense could change this in the future, so it is probably a good idea to generate and define a static `device_id` value in your configuration. The `PlugInstances` module will provide one if run as described above.
 
-A minimum plug definition will look like the following:
+A minimum configuration file and static-type plug definition will look like the following:
 ```yaml
-- BasicPlug:
-    mac: 50:c7:bf:f6:4b:07
-    device_id: 57f6811dea6d2767b5c7b29098241d8988984a07   # Optional
-    max_watts: 15
-    alias: "Basic Plug"
+sources:
+- static:
+    plugs:
+    - BasicPlug:
+        mac: 50:c7:bf:f6:4b:07
+        max_watts: 15
+        alias: "Basic Plug"
 ```
 
 ## Dynamic Plug Definition
@@ -77,6 +79,19 @@ sources:
 ```
 Note: SenseLink will prevent you from listing the same plug in more than one Aggregate plug, to prevent double-reporting.
 
+## Additional Configuration
+### Target Setting
+SenseLink will respond with power usage data to the/any IP that sends the appropriate broadcast UDP request (normally your Sense monitor), unless the top-level `target` key is specified. If the `target` key is specified, SenseLink will respond to *only* that host/IP address when it receives a broadcast request. This is useful when using SenseLink on a non-Linux Docker host that does not allow using host networking (i.e. `--net=host`). You can specify the (preferably static) IP address of your Sense monitor as the target.
+
+The `target` key should be used as follows:
+```yaml
+target: 192.168.1.20 # replace with your Monitor IP
+sources:
+- static:
+    plugs:
+    ...
+```
+
 # Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
 
@@ -87,7 +102,11 @@ SenseLink can be started directly via the command line:
 The `-l` option can also be used to set the logging level (`-l "DEBUG"`). SenseLink needs to be able to listen on UDP port `9999`, so be sure you allow incoming on any firewalls.
 
 ## Docker
-A Docker image is [available](https://hub.docker.com/repository/docker/theta142/senselink) from Dockerhub, as: `theta142/SenseLink`. When running in Docker SenseLink needs to be passed the configuration file, and needs to be able to listen on UDP port `9999`. Unfortunately Docker doesn't currently seem to play nice with UDP broadcasts, so `--net=host` is required and therefore the specific port exposure is unnecessary. An example run command is:
+A Docker image is [available](https://hub.docker.com/repository/docker/theta142/senselink) from Dockerhub, as: `theta142/SenseLink`. When running in Docker the configuration file needs to be passed in to SenseLink, and and the container needs to be able to listen on UDP port `9999`. Unfortunately the Docker network translation doesn't play nice with the Sense UDP broadcast, so you must use either:
+1. Host networking (`--net=host`) on a Linux host, or
+2. The [`target` configuration setting](#target-setting), with your Sense monitor IP specified. A Docker port mapping (`-p 9999:9999`) should also be set in this case.
+
+An example run command is:
 
 `docker run -v $(pwd)/your_config.yml:/etc/senselink/config.yml -e LOGLEVEL=INFO --net=host theta142/senselink:latest`
 
