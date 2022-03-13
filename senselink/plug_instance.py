@@ -2,13 +2,15 @@
 
 import random
 import logging
-from DataSource import DataSource
+from .data_source import DataSource
+
 from typing import Type
 from typing import Dict
 
-
 # Generator for random MAC address
 # Thanks to @pklaus: https://gist.github.com/pklaus/9638536
+
+
 def random_bytes(num=6):
     return [random.randrange(256) for _ in range(num)]
 

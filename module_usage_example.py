@@ -1,7 +1,9 @@
-from SenseLink import *
+import asyncio
 import logging
-import sys
 import random
+import sys
+
+from senselink import SenseLink
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)

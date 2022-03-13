@@ -46,3 +46,5 @@ __pycache__
 .idea/mongoSettings.xml
 
 .idea/
+/dist/
+/SenseLink.egg-info/

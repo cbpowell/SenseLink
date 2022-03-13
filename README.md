@@ -108,9 +108,11 @@ sources:
 # Usage
 First of all, note that whatever **computer or device running SenseLink needs to be on the same subnet as your Sense Home Energy Meter**! Otherwise SenseLink won't get the UDP broadcasts from the Sense requesting plug updates. There might be ways around this with UDP reflectors, but that's beyond the scope of this document.
 
-## Command Line
-SenseLink can be started directly via the command line:
-`python3 ./SenseLink.py -c "/path/to/your/config.yml"`
+## Command Line / Python Interpreter
+SenseLink can be installed via `pip`, using: `pip install senselink`. Alternatively you can clone the git repository and use it directly.
+
+Once installed, SenseLinnk can be started directly via the command line using:
+`python3 -m senselink -c "/path/to/your/config.yml"`
 
 The `-l` option can also be used to set the logging level (`-l "DEBUG"`). SenseLink needs to be able to listen on UDP port `9999`, so be sure you allow incoming on any firewalls.
 

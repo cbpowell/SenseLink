@@ -1,13 +1,18 @@
 # Copyright 2020, Charles Powell
 
-import asyncio
-import logging
-import json
 import yaml
+import asyncio
 import argparse
-from DataSource import *
-from PlugInstance import *
-from TPLinkEncryption import *
+import logging
+import dpath.util
+import json
+
+from .data_source import *
+from .plug_instance import *
+from .tplink_encryption import *
+
+from senselink.mqtt import *
+from senselink.homeassistant import *
 
 STATIC_KEY = 'static'
 MUTABLE_KEY = 'mutable'
@@ -31,6 +36,14 @@ def keys_exist(element, *keys):
         except KeyError:
             return False
     return True
+
+
+def safekey(d, keypath, default=None):
+    try:
+        val = dpath.util.get(d, keypath)
+        return val
+    except KeyError:
+        return default
 
 
 class SenseLinkProtocol(asyncio.DatagramProtocol):
@@ -160,12 +173,12 @@ class SenseLink:
                     logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
                 auth_token = hass['auth_token']
-                hass_controller = HASSController(url, auth_token)
+                hass_controller = HAController(url, auth_token)
 
                 # Generate plug instances
                 plugs = hass[PLUGS_KEY]
                 logging.info("Generating HASS instances")
-                instances = PlugInstance.configure_plugs(plugs, HASSSource, hass_controller)
+                instances = PlugInstance.configure_plugs(plugs, HASource, hass_controller)
                 self.add_instances(instances)
 
                 # Start controller
@@ -175,17 +188,17 @@ class SenseLink:
             # MQTT Plugs
             elif source_id.lower() == MQTT_KEY:
                 # Configure this MQTT Data source
-                mqtt = source[MQTT_KEY]
-                if mqtt is None:
+                mqtt_conf = source[MQTT_KEY]
+                if mqtt_conf is None:
                     logging.error(f"Configuration error for Source {source_id}")
-                host = mqtt['host']
-                port = mqtt.get('port') or 1883
-                username = mqtt.get('username') or None
-                password = mqtt.get('password') or None
+                host = mqtt_conf['host']
+                port = mqtt_conf.get('port') or 1883
+                username = mqtt_conf.get('username') or None
+                password = mqtt_conf.get('password') or None
                 mqtt_controller = MQTTController(host, port, username, password)
 
                 # Generate plug instances
-                plugs = mqtt[PLUGS_KEY]
+                plugs = mqtt_conf[PLUGS_KEY]
                 logging.info("Generating MQTT instances")
                 instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_controller)
                 self.add_instances(instances)
@@ -282,40 +295,5 @@ class SenseLink:
             self.transport.close()
 
 
-async def main():
-    import os
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", help="specify config file path")
-    parser.add_argument("-l", "--log", help="specify log level (DEBUG, INFO, etc)")
-    parser.add_argument("-q", "--quiet", help="do not respond to Sense UPD queries", action="store_true")
-    args = parser.parse_args()
-    config_path = args.config or '/etc/senselink/config.yml'
-    loglevel = args.log or 'WARNING'
-
-    loglevel = os.environ.get('LOGLEVEL', loglevel).upper()
-    logging.basicConfig(level=loglevel)
-
-    # Assume config file is in etc directory
-    config_location = os.environ.get('CONFIG_LOCATION', config_path)
-    logging.debug(f"Using config at: {config_location}")
-    config = open(config_location, 'r')
-
-    # Create controller, with config
-    controller = SenseLink(config)
-    if os.environ.get('SENSE_RESPONSE', 'True').upper() == 'TRUE' and not args.quiet:
-        logging.info("Will respond to Sense broadcasts")
-        controller.should_respond = True
-    # Create instances
-    controller.create_instances()
-
-    # Start and run indefinitely
-    logging.info("Starting SenseLink controller")
-    await controller.start()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logging.info("Interrupt received, stopping SenseLink")
+if __name__ == '__main__':
+    pass
