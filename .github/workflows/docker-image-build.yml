@@ -27,11 +27,13 @@ jobs:
       run: docker buildx use senselink-builder
     - run: docker buildx inspect --bootstrap
     - name: Define latest version via tag
-      run: echo "latest=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v1.14.1
-      with:
-        username: theta142
-        password: ${{ secrets.DOCKER_HUB_TOKEN }}
-    - name: Build SenseLink for various platforms
+      run: echo latest=$(git describe --tags $(git rev-list --tags --max-count=1))
+#     - name: Define latest version via tag
+#       run: echo latest=$(git describe --tags $(git rev-list --tags --max-count=1)) >> $GITHUB_ENV
+#     - name: Log in to Docker Hub
+#       uses: docker/login-action@v1.14.1
+#       with:
+#         username: theta142
+#         password: ${{ secrets.DOCKER_HUB_TOKEN }}
+#     - name: Build SenseLink for various platforms
       run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:${{ env.latest }} -t theta142/senselink:latest --push .
