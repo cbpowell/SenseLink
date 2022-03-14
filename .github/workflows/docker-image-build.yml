@@ -36,4 +36,4 @@ jobs:
 #         username: theta142
 #         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 #     - name: Build SenseLink for various platforms
-      run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:${{ env.latest }} -t theta142/senselink:latest --push .
+#       run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:${{ env.latest }} -t theta142/senselink:latest --push .
