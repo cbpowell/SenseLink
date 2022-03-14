@@ -3,6 +3,7 @@ import logging
 import random
 import sys
 
+# pip install SenseLink
 from senselink import SenseLink
 
 root = logging.getLogger()
