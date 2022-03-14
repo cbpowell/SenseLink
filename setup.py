@@ -1,11 +1,13 @@
 from setuptools import setup, find_packages
+import versioneer
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name='SenseLink',
-    version='2.0.0',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='A tool to create virtual smart plugs and inform a Sense Home Energy Monitor about usage in your home',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -23,5 +25,7 @@ setup(
 
     classifiers=[
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9'
     ],
 )

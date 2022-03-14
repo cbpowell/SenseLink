@@ -1,0 +1,2 @@
+_version.py export-subst
+senselink/_version.py export-subst
