@@ -90,7 +90,7 @@ class PlugInstance:
                 # Generate data source with details, and assign
                 instance.data_source = data_source_class(plug_id, details, data_controller)
 
-                # Check if this MAC has already be used
+                # Check if this MAC has already been used
                 if mac in instances.keys():
                     # Assertion error - can't use the same MAC twice!
                     prev_id = instances[mac]
@@ -106,7 +106,7 @@ class PlugInstance:
 
     @property
     def power(self):
-        return self.data_source.get_power()
+        return self.data_source.power
 
     def generate_response(self):
         # Grab latest values from source
