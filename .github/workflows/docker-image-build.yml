@@ -1,5 +1,5 @@
 
-name: Docker Image Builder for SenseLink
+name: Docker Image Builder
 
 on:
   # Allow manual dispatch
