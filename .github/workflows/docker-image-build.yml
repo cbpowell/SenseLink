@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   # Run only manually for now
 #  release:
-#    types: [published, released]
+#    types: [released]
 
 jobs:
 
@@ -16,25 +16,34 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Fetch tags
-      run: |
-         git fetch --prune --depth=1 --tags --no-recurse-submodules
+
+    - name: Get git tag version
+      run: echo git_tag=$(git describe --tags $(git rev-list --tags --max-count=1)) >> $GITHUB_ENV
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
+
     - name: Set up Docker Buildx
       id: buildx
       uses: docker/setup-buildx-action@v1
+
     - name: Create builder
       run: docker buildx create --name senselink-builder
+
     - name: Use senselink-builder
       run: docker buildx use senselink-builder
+
     - run: docker buildx inspect --bootstrap
-    - name: Define latest version via tag
-      run: echo latest=$(git describe --tags $(git rev-list --tags --max-count=1)) >> $GITHUB_ENV
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v1.14.1
       with:
         username: theta142
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
     - name: Build SenseLink for various platforms
-      run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:${{ env.latest }} -t theta142/senselink:latest --push .
+      run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:${{ env.git_tag }} --push .
+
+    - name: Push for tag latest only if not beta or alpha tagged
+      if: ${{ !contains(env.git_tag, 'beta') && !contains(env.git_tag, 'alpha') }}
+      run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t theta142/senselink:latest --push .

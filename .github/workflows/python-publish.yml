@@ -12,7 +12,7 @@ on:
   # Allow manual dispatch
   workflow_dispatch:
   release:
-    types: [published, released]
+    types: [released]
 
 jobs:
   pypi-publish:
