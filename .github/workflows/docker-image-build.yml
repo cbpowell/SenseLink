@@ -15,10 +15,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get tags
+      run: git fetch --tags origin
 
     - name: Get git tag version
       run: echo git_tag=$(git describe --tags $(git rev-list --tags --max-count=1)) >> $GITHUB_ENV
+
+    - name: Running for git tag
+      run: echo ${{ env.git_tag }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
