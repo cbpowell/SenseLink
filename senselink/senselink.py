@@ -122,7 +122,7 @@ class SenseLink:
     should_respond = True
     has_aggregate = False
 
-    def __init__(self, config, port=9999):
+    def __init__(self, config=None, port=9999):
         self.config = config
         self.port = port
         self.target = None
@@ -195,16 +195,16 @@ class SenseLink:
                 port = mqtt_conf.get('port') or 1883
                 username = mqtt_conf.get('username') or None
                 password = mqtt_conf.get('password') or None
-                mqtt_controller = MQTTController(host, port, username, password)
+                mqtt_cont = MQTTController(host, port, username, password)
 
                 # Generate plug instances
                 plugs = mqtt_conf[PLUGS_KEY]
                 logging.info("Generating MQTT instances")
-                instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_controller)
+                instances = PlugInstance.configure_plugs(plugs, MQTTSource, mqtt_cont)
                 self.add_instances(instances)
 
                 # Start controller
-                mqtt_task = mqtt_controller.connect()
+                mqtt_task = mqtt_cont.connect()
                 self.tasks.add(mqtt_task)
 
             # Aggregate-type Plugs
