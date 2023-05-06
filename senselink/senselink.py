@@ -127,7 +127,7 @@ class SenseLink:
         self.port = port
         self.target = None
         self.server_task = None
-        self._instances = {}
+        self.instances = {}
         self._agg_instances = {}
         self.tasks = set()
 
@@ -234,7 +234,7 @@ class SenseLink:
                 element_ids = ag_ds.element_ids
                 # Use those element_ids to get actual instances from global instance dict
                 elements = []
-                for plug in self._instances.values():
+                for plug in self.instances.values():
                     if plug.identifier in element_ids:
                         # Check if this plug is already in another aggregate
                         if plug.in_aggregate:
@@ -250,21 +250,31 @@ class SenseLink:
             self.add_instances(instances)
 
     def add_instances(self, instances):
-        # Check for duplicated MAC
-        union_macs = [val for val in instances.keys() if val in self._instances.keys()]
-        if any(union_macs):
-            # Assertion error - can't use the same MAC twice!
-            raise AssertionError(
-                f"Configuration Error: Two plugs configured with the same MAC address! ({union_macs})")
+        if instances is PlugInstance:
+            # Single plug
+            p_i = instances
+            self.instances.update({p_i.identifier: p_i})
+        elif all(isinstance(p, PlugInstance) for p in instances):
+            # List of plugs, convert to dict and add to storage
+            new_instances = {p_i.identifier: p_i for p_i in instances}
+            self.instances = {**self.instances, **new_instances}
+        else:
+            # Assume Dict of plugs
+            # Check for duplicated MAC
+            union_macs = [val for val in instances.keys() if val in self.instances.keys()]
+            if any(union_macs):
+                # Assertion error - can't use the same MAC twice!
+                raise AssertionError(
+                    f"Configuration Error: Two plugs configured with the same MAC address! ({union_macs})")
 
-        # Add to global instances
-        self._instances = {**self._instances, **instances}
+            # Add to global instances
+            self.instances = {**self.instances, **instances}
 
     def plug_for_mac(self, mac):
-        return self._instances[mac]
+        return self.instances[mac]
 
     def print_instance_wattages(self):
-        for inst in self._instances:
+        for inst in self.instances:
             logging.info(f"Plug {inst.identifier} power: {inst.power}")
 
     async def start(self):
@@ -274,7 +284,7 @@ class SenseLink:
     async def server_start(self):
         loop = asyncio.get_running_loop()
         finished = loop.create_future()
-        protocol = SenseLinkProtocol(self._instances, finished)
+        protocol = SenseLinkProtocol(self.instances, finished)
         protocol.should_respond = self.should_respond
         protocol.target = self.target
 
