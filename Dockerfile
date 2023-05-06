@@ -3,7 +3,7 @@ MAINTAINER Charles Powell <cbpowell@gmail.com>
 
 # Install all dependencies
 ADD . /senselink
-RUN pip install /senselink --use-feature=in-tree-build
+RUN pip install /senselink
 
 # Make non-root user
 RUN useradd --create-home appuser
