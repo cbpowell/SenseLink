@@ -11,9 +11,10 @@ class HAController:
     bulk_rq_id = 2
     data_sources = []
 
-    def __init__(self, url, auth_token):
+    def __init__(self, url, auth_token, max_ws_message_size=None):
         self.url = url
         self.auth_token = auth_token
+        self.max_ws_message = max_ws_message_size
 
     async def connect(self):
         # Create task
@@ -22,7 +23,17 @@ class HAController:
     async def client_handler(self):
         logging.info(f"Starting websocket client to URL: {self.url}")
         try:
-            async with websockets.connect(self.url) as websocket:
+            if self.max_ws_message is not None:
+                max_ws_param = int(self.max_ws_message)
+                if max_ws_param > 0:
+                    ws_args = {"uri": self.url, "max_size": max_ws_param}
+                else:
+                    # Interpret 0 as None/No limit
+                    ws_args = ws_args = {"uri": self.url, "max_size": None}
+            else:
+                ws_args = {"uri": self.url}
+
+            async with websockets.connect(**ws_args) as websocket:
                 self.ws = websocket
                 # Wait for incoming message from server
                 while True:

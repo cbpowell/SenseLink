@@ -173,7 +173,8 @@ class SenseLink:
                     logging.error(f"Configuration error for Source {source_id}")
                 url = hass['url']
                 auth_token = hass['auth_token']
-                hass_controller = HAController(url, auth_token)
+                max_message_size = hass.get('max_message_size') or None
+                hass_controller = HAController(url, auth_token, max_ws_message_size=max_message_size)
 
                 # Generate plug instances
                 plugs = hass[PLUGS_KEY]
