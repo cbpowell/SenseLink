@@ -2,7 +2,7 @@ import asyncio
 import websockets
 import json
 from socket import gaierror
-from .common import *
+from senselink.common import *
 
 
 class HAController:

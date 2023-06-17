@@ -7,6 +7,7 @@ import logging
 import dpath.util
 import json
 
+from .common import *
 from .data_source import *
 from .plug_instance import *
 from .tplink_encryption import *
@@ -20,30 +21,6 @@ HASS_KEY = 'hass'
 MQTT_KEY = 'mqtt'
 AGG_KEY = 'aggregate'
 PLUGS_KEY = 'plugs'
-
-
-# Check if a multi-layer key exists
-def keys_exist(element, *keys):
-    if not isinstance(element, dict):
-        raise AttributeError('keys_exists() expects dict as first argument.')
-    if len(keys) == 0:
-        raise AttributeError('keys_exists() expects at least two arguments, one given.')
-
-    _element = element
-    for key in keys:
-        try:
-            _element = _element[key]
-        except KeyError:
-            return False
-    return True
-
-
-def safekey(d, keypath, default=None):
-    try:
-        val = dpath.util.get(d, keypath)
-        return val
-    except KeyError:
-        return default
 
 
 class SenseLinkProtocol(asyncio.DatagramProtocol):

@@ -2,7 +2,6 @@
 from math import isclose
 
 from senselink.data_source import DataSource
-from .common import *
 from .ha_controller import *
 
 # Independently set WS logger
