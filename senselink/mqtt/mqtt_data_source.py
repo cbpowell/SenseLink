@@ -65,6 +65,16 @@ class MQTTSource(DataSource):
         return self._power
 
     def update_power(self, value, timeout=True):
+        if self.power_topic_keypath is not None:
+            logging.debug(f'Extracting power from JSON message, at key path {self.power_topic_keypath}')
+            # Extract value from (assumed) JSON message at keypath
+            message = json.loads(value)
+            # Overwrite value variable with what is extracted from JSON
+            value = safekey(message, self.power_topic_keypath)
+            if value is None:
+                logging.warning(f'Update on power topic failed to find value at power keypath ({self.power_topic_keypath})')
+                return
+
         try:
             fval = float(value)
         except ValueError:
@@ -93,6 +103,17 @@ class MQTTSource(DataSource):
 
     async def state_handler(self, value):
         logging.debug(f'State topic update for {self.identifier}: {value}')
+
+        if self.state_topic_keypath is not None:
+            logging.debug(f'Extracting state from JSON message, at key path {self.state_topic_keypath}')
+            # Extract value from (assumed) JSON message at keypath
+            message = json.loads(value)
+            # Overwrite value variable with what is extracted from JSON
+            value = safekey(message, self.state_topic_keypath)
+            if value is None:
+                logging.warning(f'Update on state topic failed to find value at state keypath ({self.state_topic_keypath})')
+                return
+
         # Act immediate if state is being set to off
         if value == self.off_state_value:
             # Device is off
@@ -125,6 +146,17 @@ class MQTTSource(DataSource):
 
     async def attribute_handler(self, value):
         logging.debug(f'Attribute topic update for {self.identifier}: {value}')
+
+        if self.attribute_topic_keypath is not None:
+            logging.debug(f'Extracting attribute value from JSON message, at key path {self.attribute_topic_keypath}')
+            # Extract value from (assumed) JSON message at keypath
+            message = json.loads(value)
+            # Overwrite value variable with what is extracted from JSON
+            value = safekey(message, self.attribute_topic_keypath)
+            if value is None:
+                logging.warning(f'Update on attribute topic failed to find value at attribute keypath ({self.attribute_topic_keypath})')
+                return
+
         # Get attribute value and scale to provided values
         try:
             attribute_value = float(value)
