@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='SenseLink',
-    version='2.2.0',
+    version='2.2.1',
     description='A tool to create virtual smart plugs and inform a Sense Home Energy Monitor about usage in your home',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -14,10 +14,10 @@ setup(
     author_email='cbpowell@gmail.com',
     license='MIT',
     packages=find_packages(),
-    install_requires=['asyncio-mqtt>=0.12.1',
-                      'dpath>=2.0.6',
+    install_requires=['aiomqtt~=1.2',
+                      'dpath~=2.1',
                       'paho-mqtt>=1.6.1',
-                      'PyYAML>=6.0',
+                      'PyYAML~=6.0',
                       'websockets>=10.2'
                       ],
 
